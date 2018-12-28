@@ -1,12 +1,13 @@
-package daomephsta.unpick.datadriven.format;
+package daomephsta.unpick.constantmappers.datadriven.parser;
 
 import java.io.IOException;
 import java.io.LineNumberReader;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.objectweb.asm.Type;
 
-import daomephsta.unpick.datadriven.*;
+import daomephsta.unpick.representations.*;
 
 public enum V1Parser
 {

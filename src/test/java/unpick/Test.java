@@ -6,9 +6,9 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
-import daomephsta.unpick.ConstantUninliner;
-import daomephsta.unpick.datadriven.ClasspathConstantResolver;
-import daomephsta.unpick.datadriven.DataDrivenConstantMapper;
+import daomephsta.unpick.constantmappers.datadriven.DataDrivenConstantMapper;
+import daomephsta.unpick.constantresolvers.ClasspathConstantResolver;
+import daomephsta.unpick.transformers.ConstantUninliner;
 
 public class Test
 {

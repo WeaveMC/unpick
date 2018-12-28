@@ -1,4 +1,4 @@
-package daomephsta.unpick.datadriven;
+package daomephsta.unpick.constantmappers.datadriven;
 
 import java.io.*;
 import java.util.HashMap;
@@ -7,9 +7,11 @@ import java.util.Map;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldInsnNode;
 
-import daomephsta.unpick.IConstantMapper;
-import daomephsta.unpick.datadriven.format.UnpickSyntaxException;
-import daomephsta.unpick.datadriven.format.V1Parser;
+import daomephsta.unpick.constantmappers.IConstantMapper;
+import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
+import daomephsta.unpick.constantmappers.datadriven.parser.V1Parser;
+import daomephsta.unpick.constantresolvers.IConstantResolver;
+import daomephsta.unpick.representations.*;
 
 public class DataDrivenConstantMapper implements IConstantMapper
 {

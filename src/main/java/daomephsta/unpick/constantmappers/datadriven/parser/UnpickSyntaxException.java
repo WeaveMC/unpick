@@ -1,4 +1,4 @@
-package daomephsta.unpick.datadriven.format;
+package daomephsta.unpick.constantmappers.datadriven.parser;
 
 public class UnpickSyntaxException extends RuntimeException
 {
