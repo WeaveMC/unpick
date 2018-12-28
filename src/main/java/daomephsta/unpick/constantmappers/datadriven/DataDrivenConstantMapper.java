@@ -13,16 +13,27 @@ import daomephsta.unpick.constantmappers.datadriven.parser.V1Parser;
 import daomephsta.unpick.constantresolvers.IConstantResolver;
 import daomephsta.unpick.representations.*;
 
+/**
+ * Maps inlined values to constants, using a mapping defined in a file
+ * @author Daomephsta
+ */
 public class DataDrivenConstantMapper implements IConstantMapper
 {
 	private final Map<String, ConstantGroup> constantGroups = new HashMap<>();
 	private final Map<String, TargetMethod> targetMethods = new HashMap<>();
 	private final IConstantResolver constantResolver;
 	
-	public DataDrivenConstantMapper(InputStream input, IConstantResolver constantResolver)
+	/**
+	 * Constructs a new data driven constant mapper, using the mappings in {@code mappingSource}
+	 * and resolving constants using {@code constantResolver}.
+	 * @param mappingSource an input stream of text in .unpick format
+	 * @param constantResolver an instance of IConstantResolver for resolving constant types and 
+	 * values.
+	 */
+	public DataDrivenConstantMapper(InputStream mappingSource, IConstantResolver constantResolver)
 	{
 		this.constantResolver = constantResolver;
-		try(LineNumberReader reader = new LineNumberReader(new InputStreamReader(input)))
+		try(LineNumberReader reader = new LineNumberReader(new InputStreamReader(mappingSource)))
 		{
 			String line1 = reader.readLine();
 			if ("v1".equals(line1))
@@ -65,7 +76,7 @@ public class DataDrivenConstantMapper implements IConstantMapper
 		return new FieldInsnNode(Opcodes.GETSTATIC, constantDefinition.getOwner(), constantDefinition.getName(), 
 			constantDefinition.getDescriptorString());
 	}
-
+	
 	private String getMethodKey(String methodOwner, String methodName, String methodDescriptor)
 	{
 		return methodOwner + '.' + methodName + methodDescriptor;
