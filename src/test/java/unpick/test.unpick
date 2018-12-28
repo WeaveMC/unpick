@@ -1,0 +1,12 @@
+v1
+; Format:
+; constant <name> <id> <constant path> 
+; constant <name> <id> <constant path> <desc>
+; unpick <method signature> <param index> <group>
+
+constant gl_matrix_mode org/lwjgl/opengl/GL11 GL_MODELVIEW
+constant gl_matrix_mode org/lwjgl/opengl/GL11 GL_PROJECTION
+constant gl_matrix_mode org/lwjgl/opengl/GL11 GL_TEXTURE 
+constant gl_matrix_mode org/lwjgl/opengl/GL11 GL_COLOR 6144 I
+
+unpick com/mojang/blaze3d/platform/GlStateManager matrixMode (I)V 0 gl_matrix_mode
