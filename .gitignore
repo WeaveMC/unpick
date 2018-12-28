@@ -4,3 +4,10 @@ bin/
 build/
 .project
 .classpath
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+TestClass.class
