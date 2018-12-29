@@ -1,12 +1,22 @@
-package daomephsta.unpick.datadriven;
+package daomephsta.unpick.representations;
 
 import java.util.*;
 
+import daomephsta.unpick.constantresolvers.IConstantResolver;
+
+/**
+ * A group of constants represented by {@link ConstantDefinition}s.
+ * @author Daomephsta
+ */
 public class ConstantGroup
 {
 	private final Map<Object, ConstantDefinition> resolvedConstantDefinitions = new HashMap<>();
 	private final Collection<ConstantDefinition> unresolvedConstantDefinitions = new ArrayList<>();
 
+	/**
+	 * Adds a constant definition to this group.
+	 * @param constantDefinition a constant definition.
+	 */
 	public void add(ConstantDefinition constantDefinition)
 	{
 		if (constantDefinition.isResolved())
@@ -15,6 +25,14 @@ public class ConstantGroup
 			unresolvedConstantDefinitions.add(constantDefinition);
 	}
 	
+	/**
+	 * Gets a constant definition by value, resolving all 
+	 * unresolved constant definitions first.
+	 * @param constantResolver an instance of IConstantResolver
+	 * to use to resolve unresolved constant definitions.
+	 * @param value the value to retrieve a constant definition for.
+	 * @return a resolved constant definition with a value equal to {@code value}
+	 */
 	public ConstantDefinition get(IConstantResolver constantResolver, Object value)
 	{
 		if (!unresolvedConstantDefinitions.isEmpty())

@@ -1,4 +1,4 @@
-package daomephsta.unpick.datadriven;
+package daomephsta.unpick.constantresolvers;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -10,6 +10,10 @@ import org.objectweb.asm.*;
 
 import daomephsta.unpick.Types;
 
+/**
+ * Resolves constants by looking for them on the classpath.
+ * @author Daomephsta
+ */
 public class ClasspathConstantResolver implements IConstantResolver
 {
 	private static final Set<Type> VALID_CONSTANT_TYPES = 

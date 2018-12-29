@@ -1,20 +1,36 @@
-package daomephsta.unpick;
+package daomephsta.unpick.transformers;
 
 import org.objectweb.asm.*;
+
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.*;
 import org.objectweb.asm.tree.analysis.Frame;
 
+import daomephsta.unpick.constantmappers.IConstantMapper;
+/**
+ * Uninlines inlined values, mapping them to constants using the specified
+ * instance of {@link IConstantMapper} 
+ * @author Daomephsta
+ */
 public class ConstantUninliner
 {
 	private final IConstantMapper mapper;
 	private final Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
 
+	/**
+	 * Constructs a new instance of ConstantUninliner that maps
+	 * values to constants with {@code mapper}.
+	 * @param mapper an instance of IConstantMapper.
+	 */
 	public ConstantUninliner(IConstantMapper mapper)
 	{
 		this.mapper = mapper;
 	}
 
+	/**
+	 * Unlines all inlined values in the specified class.
+	 * @param classNode the class to transform, as a ClassNode.
+	 */
 	public void transform(ClassNode classNode)
 	{
 		for (MethodNode method : classNode.methods)
@@ -23,6 +39,12 @@ public class ConstantUninliner
 		}
 	}
 
+	/**
+	 * Unlines all inlined values in the specified method.
+	 * @param methodOwner the internal name of the class that owns
+	 * the method represented by {@code method}.
+	 * @param method the class to transform, as a MethodNode.
+	 */
 	public void transformMethod(String methodOwner, MethodNode method)
 	{
 		try
@@ -52,6 +74,7 @@ public class ConstantUninliner
 				continue;
 			for (AbstractInsnNode sourceInsn : frame.getStack(parameterIndex).insns)
 			{
+				//TODO find all constant sources and make sure they work
 				if (sourceInsn instanceof IntInsnNode && sourceInsn.getOpcode() == Opcodes.SIPUSH)
 					transformIntInsn(enclosingMethod, methodInvocation, parameterIndex, (IntInsnNode) sourceInsn);
 			}

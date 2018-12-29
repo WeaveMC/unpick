@@ -1,12 +1,18 @@
-package daomephsta.unpick.datadriven;
+package daomephsta.unpick.representations;
 
 import java.util.Map.Entry;
 
 import org.objectweb.asm.Type;
 
 import daomephsta.unpick.Types;
-import daomephsta.unpick.datadriven.format.UnpickSyntaxException;
+import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
+import daomephsta.unpick.constantresolvers.IConstantResolver;
 
+/**
+ * Represents a constant field. The value and descriptor may be
+ * lazily resolved at runtime.
+ * @author Daomephsta
+ */
 public class ConstantDefinition
 {
 	private final String owner,
@@ -14,12 +20,28 @@ public class ConstantDefinition
 	private Type descriptor;
 	private Object value;
 	
+	/**
+	 * Constructs an instance of ConstantDefinition that will
+	 * have its value and descriptor lazily resolved.
+	 * @param owner the internal name of the class that owns 
+	 * the represented constant.
+	 * @param name the name of the represented constant.
+	 */
 	public ConstantDefinition(String owner, String name)
 	{
 		this.owner = owner;
 		this.name = name;
 	}
 
+	/**
+	 * Constructs an instance of ConstantDefinition with the 
+	 * specified value and descriptor.
+	 * @param owner the internal name of the class that owns 
+	 * the represented constant.
+	 * @param name the name of the represented constant.
+	 * @param descriptor the descriptor of the represented constant.
+	 * @param the value of the the represented constant, as a String.
+	 */
 	public ConstantDefinition(String owner, String name, Type descriptor, String valueString)
 	{
 		this.owner = owner;
@@ -65,26 +87,31 @@ public class ConstantDefinition
 		return this;
 	}
 	
+	/**@return the internal name of the class that owns the represented constant*/
 	public String getOwner()
 	{
 		return owner;
 	}
 	
+	/**@return the name of the represented constant*/
 	public String getName()
 	{
 		return name;
 	}
 	
+	/**@return the descriptor of the represented constant*/
 	public Type getDescriptor()
 	{
 		return descriptor;
 	}
 	
+	/**@return the descriptor of the represented constant, as a string*/
 	public String getDescriptorString()
 	{
 		return descriptor.getDescriptor();
 	}
 
+	/**@return the value of the represented constant*/
 	public Object getValue()
 	{
 		return value;
