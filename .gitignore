@@ -3,5 +3,11 @@
 bin/
 build/
 test-out/
+
 .project
 .classpath
+
+.idea/
+*.iml
+*.ipr
+*.iws
