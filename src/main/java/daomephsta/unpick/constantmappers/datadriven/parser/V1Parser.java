@@ -2,8 +2,8 @@ package daomephsta.unpick.constantmappers.datadriven.parser;
 
 import java.io.IOException;
 import java.io.LineNumberReader;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Pattern;
 
 import org.objectweb.asm.Type;
 
@@ -13,36 +13,58 @@ public enum V1Parser
 {
 	INSTANCE;
 	
+	private static final Pattern WHITESPACE_SPLITTER = Pattern.compile("\\s");
+	
 	public void parse(LineNumberReader reader, Map<String, ConstantGroup> constantGroups, Map<String, TargetMethod> targetMethods) throws IOException
 	{
 		String line = "";
 		while((line = reader.readLine()) != null)
 		{
-			//Ignore comments and blank lines
-			if (line.startsWith(";") || line.isEmpty())
-				continue;
-			else
+			line = stripComment(line).trim();
+			if (line.isEmpty()) continue;
+
+			String[] tokens = tokenize(line);
+			if (tokens.length == 0) continue;
+			
+			switch (tokens[0])
 			{
-				String[] tokens = line.split("\\s");
-				if ("constant".equals(tokens[0]))
-				{
-					if (tokens.length != 4 && tokens.length != 6)
-						throw new UnpickSyntaxException(reader.getLineNumber(), "Unexpected token count. Expected 4 or 6. Found " + tokens.length);
-					
-					String group = tokens[1];
-					ConstantDefinition parsedConstant = parseConstantDefinition(tokens, reader.getLineNumber());
-					ConstantGroup constantGroup = constantGroups.computeIfAbsent(group, k -> new ConstantGroup());
-					constantGroup.add(parsedConstant);
-				}
-				else if("unpick".equals(tokens[0]))
-				{
-					TargetMethod parsedTargetMethod = parseTargetMethodDefinition(tokens, reader.getLineNumber());
-					targetMethods.put(parsedTargetMethod.getOwner() + '.' + parsedTargetMethod.getName() + parsedTargetMethod.getMethodDescriptor().getDescriptor(), parsedTargetMethod);
-				}
-				else
-					throw new UnpickSyntaxException(reader.getLineNumber(), "Unknown start token " + tokens[0]);
+			case "constant":
+				if (tokens.length != 4 && tokens.length != 6)
+					throw new UnpickSyntaxException(reader.getLineNumber(), "Unexpected token count. Expected 4 or 6. Found " + tokens.length);
+				
+				String group = tokens[1];
+				ConstantDefinition parsedConstant = parseConstantDefinition(tokens, reader.getLineNumber());
+				ConstantGroup constantGroup = constantGroups.computeIfAbsent(group, k -> new ConstantGroup());
+				constantGroup.add(parsedConstant);
+				break;
+				
+			case "unpick":
+				TargetMethod parsedTargetMethod = parseTargetMethodDefinition(tokens, reader.getLineNumber());
+				targetMethods.put(parsedTargetMethod.getOwner() + '.' + parsedTargetMethod.getName() + parsedTargetMethod.getMethodDescriptor().getDescriptor(), parsedTargetMethod);
+				break;
+				
+			default:
+				throw new UnpickSyntaxException(reader.getLineNumber(), "Unknown start token " + tokens[0]);
 			}
 		}
+	}
+	
+	private String stripComment(String in)
+	{
+		int c = in.indexOf(';');
+		return c == -1 ? in : in.substring(0, c);
+	}
+
+	private String[] tokenize(String in)
+	{
+		List<String> result = new ArrayList<>();
+
+		for (String s : WHITESPACE_SPLITTER.split(in))
+		{
+			if (!s.isEmpty()) result.add(s);
+		}
+
+		return result.toArray(new String[0]);
 	}
 
 	private ConstantDefinition parseConstantDefinition(String[] tokens, int lineNumber)
