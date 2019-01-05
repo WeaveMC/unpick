@@ -1,10 +1,10 @@
 package daomephsta.unpick.transformers;
 
-import org.objectweb.asm.*;
-
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.*;
-import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.util.Printer;
 
 import daomephsta.unpick.constantmappers.IConstantMapper;
 /**
@@ -54,7 +54,7 @@ public class ConstantUninliner
 			{
 				AbstractInsnNode insn = method.instructions.get(i);
 				if (insn instanceof MethodInsnNode)
-					processMethodInvocation(method, (MethodInsnNode) insn, frames[i]);
+					processMethodInvocation(method, (MethodInsnNode) insn, frames, i);
 			}
 		}
 		catch (AnalyzerException e)
@@ -63,7 +63,7 @@ public class ConstantUninliner
 		}
 	}
 
-	private void processMethodInvocation(MethodNode enclosingMethod, MethodInsnNode methodInvocation, Frame<SourceValue> frame)
+	private void processMethodInvocation(MethodNode enclosingMethod, MethodInsnNode methodInvocation, Frame<SourceValue>[] frames, int instructionIndex)
 	{
 		if (!mapper.targets(methodInvocation.owner, methodInvocation.name, methodInvocation.desc))
 			return;
@@ -72,19 +72,65 @@ public class ConstantUninliner
 		{
 			if (!mapper.targets(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex))
 				continue;
-			for (AbstractInsnNode sourceInsn : frame.getStack(parameterIndex).insns)
+			for (AbstractInsnNode sourceInsn : frames[instructionIndex].getStack(parameterIndex).insns)
 			{
-				//TODO find all constant sources and make sure they work
-				if (sourceInsn instanceof IntInsnNode && sourceInsn.getOpcode() == Opcodes.SIPUSH)
-					transformIntInsn(enclosingMethod, methodInvocation, parameterIndex, (IntInsnNode) sourceInsn);
+				Object constantValue = getConstantValue(sourceInsn);
+				if (constantValue != null)
+					transformConstantSource(enclosingMethod, methodInvocation, parameterIndex, sourceInsn, constantValue);
 			}
 		}
 	}
-
-	private void transformIntInsn(MethodNode enclosingMethod, MethodInsnNode methodInvocation, int parameterIndex, IntInsnNode insn)
+	
+	private Object getConstantValue(AbstractInsnNode insn)
 	{
-		FieldInsnNode constant = mapper.map(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, 
-			insn.operand);
+		switch (insn.getOpcode())
+		{
+		case Opcodes.BIPUSH:
+		case Opcodes.SIPUSH:
+			return ((IntInsnNode) insn).operand;
+		case Opcodes.LDC:
+			return ((LdcInsnNode) insn).cst;
+			
+		case Opcodes.ICONST_M1:
+			return -1;
+		case Opcodes.ICONST_0:
+			return 0;
+		case Opcodes.ICONST_1:
+			return 1;
+		case Opcodes.ICONST_2:
+			return 2;
+		case Opcodes.ICONST_3:
+			return 3;
+		case Opcodes.ICONST_4:
+			return 4;
+		case Opcodes.ICONST_5:
+			return 5;
+			
+		case Opcodes.LCONST_0:
+			return 0L;
+		case Opcodes.LCONST_1:
+			return 1L;
+			
+		case Opcodes.FCONST_0:
+			return 0F;
+		case Opcodes.FCONST_1:
+			return 1F;
+		case Opcodes.FCONST_2:
+			return 2F;
+			
+		case Opcodes.DCONST_0:
+			return 0D;
+		case Opcodes.DCONST_1:
+			return 1D;
+			
+		default:
+			return null;
+		}
+	}
+
+	private void transformConstantSource(MethodNode enclosingMethod, MethodInsnNode methodInvocation, int parameterIndex, AbstractInsnNode insn, Object value)
+	{	
+		FieldInsnNode constant = mapper.map(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, value);
 		if (constant != null)
 			enclosingMethod.instructions.set(insn, constant);
 	}
