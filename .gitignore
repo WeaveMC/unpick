@@ -2,5 +2,6 @@
 .settings/
 bin/
 build/
+test-out/
 .project
 .classpath
