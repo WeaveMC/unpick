@@ -51,7 +51,7 @@ public enum V1Parser
 	
 	private String stripComment(String in)
 	{
-		int c = in.indexOf(';');
+		int c = in.indexOf('#');
 		return c == -1 ? in : in.substring(0, c);
 	}
 

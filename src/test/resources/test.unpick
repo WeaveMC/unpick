@@ -1,8 +1,4 @@
 v1
-; Format:
-; constant <name> <id> <constant path> 
-; constant <name> <id> <constant path> <desc>
-; unpick <method signature> <param index> <group>
 
 constant int_test unpick/Constants INT_CONST_M1
 constant int_test unpick/Constants INT_CONST_0
