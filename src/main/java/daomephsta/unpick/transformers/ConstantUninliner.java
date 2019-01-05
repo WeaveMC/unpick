@@ -4,7 +4,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.*;
-import org.objectweb.asm.util.Printer;
 
 import daomephsta.unpick.constantmappers.IConstantMapper;
 /**
