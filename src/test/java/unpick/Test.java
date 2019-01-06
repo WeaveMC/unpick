@@ -18,6 +18,7 @@ public class Test
 			new ClasspathConstantResolver());
 		ConstantUninliner uninliner = new ConstantUninliner(mapper);
 		processTestFile(uninliner, SimpleConstantUninliningTest.class);
+		processTestFile(uninliner, FlagUninliningTest.class);
 	}
 
 	private static void processTestFile(ConstantUninliner uninliner, Class<?> clazz)

@@ -2,22 +2,26 @@ package daomephsta.unpick.representations;
 
 import java.util.*;
 
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
+
 import daomephsta.unpick.constantresolvers.IConstantResolver;
 
 /**
- * A group of constants represented by {@link ConstantDefinition}s.
+ * A group of constants represented by {@link SimpleConstantDefinition}s.
  * @author Daomephsta
  */
-public class ConstantGroup
+public class SimpleConstantGroup implements ReplacementInstructionGenerator
 {
-	private final Map<Object, ConstantDefinition> resolvedConstantDefinitions = new HashMap<>();
-	private final Collection<ConstantDefinition> unresolvedConstantDefinitions = new ArrayList<>();
-
+	private final Map<Object, SimpleConstantDefinition> resolvedConstantDefinitions = new HashMap<>();
+	private final Collection<SimpleConstantDefinition> unresolvedConstantDefinitions = new ArrayList<>();
+	
 	/**
 	 * Adds a constant definition to this group.
 	 * @param constantDefinition a constant definition.
 	 */
-	public void add(ConstantDefinition constantDefinition)
+	public void add(SimpleConstantDefinition constantDefinition)
 	{
 		if (constantDefinition.isResolved())
 			resolvedConstantDefinitions.put(constantDefinition.getValue(), constantDefinition);
@@ -33,17 +37,30 @@ public class ConstantGroup
 	 * @param value the value to retrieve a constant definition for.
 	 * @return a resolved constant definition with a value equal to {@code value}
 	 */
-	public ConstantDefinition get(IConstantResolver constantResolver, Object value)
+	@Override
+	public InsnList createReplacementInstructions(IConstantResolver constantResolver, Object value)
+	{
+		resolveAllConstants(constantResolver);
+		
+		SimpleConstantDefinition constantDefinition = resolvedConstantDefinitions.get(value);
+		
+		InsnList replacementInstructions = new InsnList();
+		replacementInstructions.add(new FieldInsnNode(Opcodes.GETSTATIC, constantDefinition.getOwner(), constantDefinition.getName(), 
+			constantDefinition.getDescriptorString()));
+		
+		return replacementInstructions;
+	}
+	
+	private void resolveAllConstants(IConstantResolver constantResolver)
 	{
 		if (!unresolvedConstantDefinitions.isEmpty())
 		{
-			for (ConstantDefinition definition : unresolvedConstantDefinitions)
+			for (SimpleConstantDefinition definition : unresolvedConstantDefinitions)
 			{
 				resolvedConstantDefinitions.put(definition.resolve(constantResolver).getValue(), definition);
 			}
 			unresolvedConstantDefinitions.clear();
 		}
-		return resolvedConstantDefinitions.get(value);
 	}
 
 	@Override

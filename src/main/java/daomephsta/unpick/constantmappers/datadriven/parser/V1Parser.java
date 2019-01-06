@@ -15,7 +15,7 @@ public enum V1Parser
 	
 	private static final Pattern WHITESPACE_SPLITTER = Pattern.compile("\\s");
 	
-	public void parse(LineNumberReader reader, Map<String, ConstantGroup> constantGroups, Map<String, TargetMethod> targetMethods) throws IOException
+	public void parse(LineNumberReader reader, Map<String, ReplacementInstructionGenerator> constantGroups, Map<String, TargetMethod> targetMethods) throws IOException
 	{
 		String line = "";
 		while((line = reader.readLine()) != null)
@@ -29,14 +29,42 @@ public enum V1Parser
 			switch (tokens[0])
 			{
 			case "constant":
+			{
 				if (tokens.length != 4 && tokens.length != 6)
 					throw new UnpickSyntaxException(reader.getLineNumber(), "Unexpected token count. Expected 4 or 6. Found " + tokens.length);
 				
 				String group = tokens[1];
-				ConstantDefinition parsedConstant = parseConstantDefinition(tokens, reader.getLineNumber());
-				ConstantGroup constantGroup = constantGroups.computeIfAbsent(group, k -> new ConstantGroup());
-				constantGroup.add(parsedConstant);
+				SimpleConstantDefinition parsedConstant = parseConstantDefinition(tokens, reader.getLineNumber());
+				ReplacementInstructionGenerator constantGroup = constantGroups.get(group);
+				if (constantGroup == null)
+				{
+					constantGroups.put(group, (constantGroup = new SimpleConstantGroup()));
+				}
+				if (constantGroup instanceof SimpleConstantGroup)
+					((SimpleConstantGroup) constantGroup).add(parsedConstant);
+				else 
+					throw new UnpickSyntaxException(reader.getLineNumber(), "Cannot add simple constant to non-simple constant group of type " + constantGroup.getClass().getSimpleName());
 				break;
+			}
+			
+			case "flag":
+			{
+				if (tokens.length != 4 && tokens.length != 6)
+					throw new UnpickSyntaxException(reader.getLineNumber(), "Unexpected token count. Expected 4 or 6. Found " + tokens.length);
+				
+				String group = tokens[1];
+				FlagDefinition parsedFlag = parseFlagDefinition(tokens, reader.getLineNumber());
+				ReplacementInstructionGenerator constantGroup = constantGroups.get(group);
+				if (constantGroup == null)
+				{
+					constantGroups.put(group, (constantGroup = new FlagConstantGroup()));
+				}
+				if (constantGroup instanceof FlagConstantGroup)
+					((FlagConstantGroup) constantGroup).add(parsedFlag);
+				else 
+					throw new UnpickSyntaxException(reader.getLineNumber(), "Cannot add flag to non-flag group of type " + constantGroup.getClass().getSimpleName());
+				break;
+			}
 				
 			case "unpick":
 				TargetMethod parsedTargetMethod = parseTargetMethodDefinition(tokens, reader.getLineNumber());
@@ -67,7 +95,7 @@ public enum V1Parser
 		return result.toArray(new String[0]);
 	}
 
-	private ConstantDefinition parseConstantDefinition(String[] tokens, int lineNumber)
+	private SimpleConstantDefinition parseConstantDefinition(String[] tokens, int lineNumber)
 	{ 
 		String owner = tokens[2];
 		String name = tokens[3];
@@ -78,7 +106,7 @@ public enum V1Parser
 			{
 				Type descriptor = Type.getType(tokens[5]); 
 				String value = tokens[4];
-				return new ConstantDefinition(owner, name, descriptor, value);
+				return new SimpleConstantDefinition(owner, name, descriptor, value);
 			}
 			catch (IllegalArgumentException e)
 			{
@@ -86,7 +114,29 @@ public enum V1Parser
 			}
 		}
 		
-		return new ConstantDefinition(owner, name);
+		return new SimpleConstantDefinition(owner, name);
+	}
+	
+	private FlagDefinition parseFlagDefinition(String[] tokens, int lineNumber)
+	{ 
+		String owner = tokens[2];
+		String name = tokens[3];
+		
+		if (tokens.length > 4)
+		{
+			try 
+			{
+				Type descriptor = Type.getType(tokens[5]); 
+				String value = tokens[4];
+				return new FlagDefinition(owner, name, descriptor, value);
+			}
+			catch (IllegalArgumentException e)
+			{
+				throw new UnpickSyntaxException(lineNumber, "Unable to parse descriptor " + tokens[4]);
+			}
+		}
+		
+		return new FlagDefinition(owner, name);
 	}
 
 	private TargetMethod parseTargetMethodDefinition(String[] tokens, int lineNumber)

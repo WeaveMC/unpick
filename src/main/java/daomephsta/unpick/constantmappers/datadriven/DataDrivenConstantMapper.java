@@ -4,14 +4,14 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
 
 import daomephsta.unpick.constantmappers.IConstantMapper;
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
 import daomephsta.unpick.constantmappers.datadriven.parser.V1Parser;
 import daomephsta.unpick.constantresolvers.IConstantResolver;
-import daomephsta.unpick.representations.*;
+import daomephsta.unpick.representations.ReplacementInstructionGenerator;
+import daomephsta.unpick.representations.TargetMethod;
 
 /**
  * Maps inlined values to constants, using a mapping defined in a file
@@ -19,7 +19,7 @@ import daomephsta.unpick.representations.*;
  */
 public class DataDrivenConstantMapper implements IConstantMapper
 {
-	private final Map<String, ConstantGroup> constantGroups = new HashMap<>();
+	private final Map<String, ReplacementInstructionGenerator> constantGroups = new HashMap<>();
 	private final Map<String, TargetMethod> targetMethods = new HashMap<>();
 	private final IConstantResolver constantResolver;
 	
@@ -60,21 +60,18 @@ public class DataDrivenConstantMapper implements IConstantMapper
 	}
 	
 	@Override
-	public FieldInsnNode map(String methodOwner, String methodName, String methodDescriptor, int parameterIndex, Object value)
+	public InsnList map(String methodOwner, String methodName, String methodDescriptor, int parameterIndex, Object value)
 	{	
 		String methodKey = getMethodKey(methodOwner, methodName, methodDescriptor);
 		String constantGroupID = targetMethods.get(methodKey).getParameterConstantGroup(parameterIndex);
-		ConstantGroup constantGroup = constantGroups.get(constantGroupID);
+		ReplacementInstructionGenerator constantGroup = constantGroups.get(constantGroupID);
 		if (constantGroup == null)
 		{
 			throw new UnpickSyntaxException(String.format("The constant group '%s' does not exist. Target Method: %s Parameter Index: %d",
 				constantGroupID, methodKey, parameterIndex));
 		}
-		ConstantDefinition constantDefinition = constantGroup.get(constantResolver, value);
-		if (constantDefinition == null)
-			return null;
-		return new FieldInsnNode(Opcodes.GETSTATIC, constantDefinition.getOwner(), constantDefinition.getName(), 
-			constantDefinition.getDescriptorString());
+		
+		return constantGroup.createReplacementInstructions(constantResolver, value);
 	}
 	
 	private String getMethodKey(String methodOwner, String methodName, String methodDescriptor)

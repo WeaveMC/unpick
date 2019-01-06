@@ -1,7 +1,5 @@
 package daomephsta.unpick.representations;
 
-import java.util.Map.Entry;
-
 import org.objectweb.asm.Type;
 
 import daomephsta.unpick.Types;
@@ -9,32 +7,32 @@ import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException
 import daomephsta.unpick.constantresolvers.IConstantResolver;
 
 /**
- * Represents a constant field. The value and descriptor may be
+ * Represents an abstract constant field. The value and descriptor may be
  * lazily resolved at runtime.
  * @author Daomephsta
  */
-public class ConstantDefinition
+public abstract class AbstractConstantDefinition<C extends AbstractConstantDefinition<C>>
 {
-	private final String owner,
+	protected final String owner,
 						 name;
-	private Type descriptor;
-	private Object value;
+	protected Type descriptor;
+	protected Object value;
 	
 	/**
-	 * Constructs an instance of ConstantDefinition that will
+	 * Constructs an instance of AbstractConstantDefinition that will
 	 * have its value and descriptor lazily resolved.
 	 * @param owner the internal name of the class that owns 
 	 * the represented constant.
 	 * @param name the name of the represented constant.
 	 */
-	public ConstantDefinition(String owner, String name)
+	public AbstractConstantDefinition(String owner, String name)
 	{
 		this.owner = owner;
 		this.name = name;
 	}
 
 	/**
-	 * Constructs an instance of ConstantDefinition with the 
+	 * Constructs an instance of AbstractConstantDefinition with the 
 	 * specified value and descriptor.
 	 * @param owner the internal name of the class that owns 
 	 * the represented constant.
@@ -42,7 +40,7 @@ public class ConstantDefinition
 	 * @param descriptor the descriptor of the represented constant.
 	 * @param the value of the the represented constant, as a String.
 	 */
-	public ConstantDefinition(String owner, String name, Type descriptor, String valueString)
+	public AbstractConstantDefinition(String owner, String name, Type descriptor, String valueString)
 	{
 		this.owner = owner;
 		this.name = name;
@@ -50,7 +48,8 @@ public class ConstantDefinition
 		this.value = parseValue(valueString);
 	}
 	
-	private Object parseValue(String valueString)
+	
+	protected Object parseValue(String valueString)
 	{
 		try 
 		{ 
@@ -79,13 +78,7 @@ public class ConstantDefinition
 		return value != null;
 	}
 	
-	ConstantDefinition resolve(IConstantResolver constantResolver)
-	{
-		Entry<Type, Object> resolvedData = constantResolver.resolveConstant(owner, name);
-		this.descriptor = resolvedData.getKey();
-		this.value = resolvedData.getValue();
-		return this;
-	}
+	abstract C resolve(IConstantResolver constantResolver);
 	
 	/**@return the internal name of the class that owns the represented constant*/
 	public String getOwner()
@@ -115,12 +108,5 @@ public class ConstantDefinition
 	public Object getValue()
 	{
 		return value;
-	}
-	
-	@Override
-	public String toString()
-	{
-		return String.format("ConstantDefinition {Qualified Name: %s.%s, Descriptor: %s, Value: %s}", 
-			owner, name, descriptor, value);
 	}
 }

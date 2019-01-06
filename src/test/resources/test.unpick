@@ -34,3 +34,17 @@ constant str_test unpick/Constants STRING_CONST_FOO
 constant str_test unpick/Constants STRING_CONST_BAR
 
 unpick unpick/SimpleConstantUninliningTest stringTest (Ljava/lang/String;)V 0 str_test
+
+flag int_flag_test unpick/Constants INT_FLAG_BIT_0
+flag int_flag_test unpick/Constants INT_FLAG_BIT_1
+flag int_flag_test unpick/Constants INT_FLAG_BIT_2
+flag int_flag_test unpick/Constants INT_FLAG_BIT_3
+
+unpick unpick/FlagUninliningTest intTest (I)V 0 int_flag_test
+
+flag long_flag_test unpick/Constants LONG_FLAG_BIT_0
+flag long_flag_test unpick/Constants LONG_FLAG_BIT_1
+flag long_flag_test unpick/Constants LONG_FLAG_BIT_2
+flag long_flag_test unpick/Constants LONG_FLAG_BIT_3
+
+unpick unpick/FlagUninliningTest longTest (J)V 0 long_flag_test

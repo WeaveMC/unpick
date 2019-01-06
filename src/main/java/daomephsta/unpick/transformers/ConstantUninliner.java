@@ -1,5 +1,8 @@
 package daomephsta.unpick.transformers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -48,12 +51,18 @@ public class ConstantUninliner
 	{
 		try
 		{
+			Map<AbstractInsnNode, InsnList> replacements = new HashMap<>();
 			Frame<SourceValue>[] frames = analyzer.analyze(methodOwner, method);
 			for (int i = 0; i < method.instructions.size(); i++)
 			{
 				AbstractInsnNode insn = method.instructions.get(i);
 				if (insn instanceof MethodInsnNode)
-					processMethodInvocation(method, (MethodInsnNode) insn, frames, i);
+					processMethodInvocation(replacements, method, (MethodInsnNode) insn, frames, i);
+			}
+			for (Map.Entry<AbstractInsnNode, InsnList> replacement : replacements.entrySet())
+			{
+				method.instructions.insert(replacement.getKey(), replacement.getValue());
+				method.instructions.remove(replacement.getKey());
 			}
 		}
 		catch (AnalyzerException e)
@@ -62,7 +71,7 @@ public class ConstantUninliner
 		}
 	}
 
-	private void processMethodInvocation(MethodNode enclosingMethod, MethodInsnNode methodInvocation, Frame<SourceValue>[] frames, int instructionIndex)
+	private void processMethodInvocation(Map<AbstractInsnNode, InsnList> replacements, MethodNode enclosingMethod, MethodInsnNode methodInvocation, Frame<SourceValue>[] frames, int instructionIndex)
 	{
 		if (!mapper.targets(methodInvocation.owner, methodInvocation.name, methodInvocation.desc))
 			return;
@@ -75,7 +84,11 @@ public class ConstantUninliner
 			{
 				Object constantValue = getConstantValue(sourceInsn);
 				if (constantValue != null)
-					transformConstantSource(enclosingMethod, methodInvocation, parameterIndex, sourceInsn, constantValue);
+				{
+					InsnList replacementInstructions = mapper.map(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, constantValue);
+					if (replacementInstructions != null)
+						replacements.put(sourceInsn, replacementInstructions);
+				}
 			}
 		}
 	}
@@ -125,12 +138,5 @@ public class ConstantUninliner
 		default:
 			return null;
 		}
-	}
-
-	private void transformConstantSource(MethodNode enclosingMethod, MethodInsnNode methodInvocation, int parameterIndex, AbstractInsnNode insn, Object value)
-	{	
-		FieldInsnNode constant = mapper.map(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, value);
-		if (constant != null)
-			enclosingMethod.instructions.set(insn, constant);
 	}
 }
