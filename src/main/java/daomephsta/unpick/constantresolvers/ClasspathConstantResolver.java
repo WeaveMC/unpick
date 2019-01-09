@@ -2,9 +2,8 @@ package daomephsta.unpick.constantresolvers;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Map;
-import java.util.Set;
 
 import org.objectweb.asm.*;
 
@@ -16,8 +15,12 @@ import daomephsta.unpick.Types;
  */
 public class ClasspathConstantResolver implements IConstantResolver
 {
-	private static final Set<Type> VALID_CONSTANT_TYPES = 
-		Set.of(Type.INT_TYPE, Type.LONG_TYPE, Type.FLOAT_TYPE, Type.DOUBLE_TYPE, Types.STRING_TYPE, Types.TYPE_TYPE);
+	private static final Set<Type> VALID_CONSTANT_TYPES = new HashSet<>();
+	static 
+	{
+		Collections.addAll(VALID_CONSTANT_TYPES, Type.INT_TYPE, Type.LONG_TYPE, Type.FLOAT_TYPE, Type.DOUBLE_TYPE, 
+			Types.STRING_TYPE, Types.TYPE_TYPE);
+	}
 	
 	@Override
 	public Map.Entry<Type, Object> resolveConstant(String owner, String name)

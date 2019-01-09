@@ -3,6 +3,12 @@ plugins
     id 'java-library'
 }
 
+group = 'daomephsta.unpick'
+version = '1.0.0'
+archivesBaseName='unpick'
+
+targetCompatibility = 1.8
+
 repositories
 {
     jcenter()
