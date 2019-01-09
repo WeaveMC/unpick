@@ -34,7 +34,7 @@ public class SimpleConstantDefinition extends AbstractConstantDefinition<SimpleC
 	 * the represented constant.
 	 * @param name the name of the represented constant.
 	 * @param descriptor the descriptor of the represented constant.
-	 * @param the value of the the represented constant, as a String.
+	 * @param valueString the value of the the represented constant, as a String.
 	 */
 	public SimpleConstantDefinition(String owner, String name, Type descriptor, String valueString)
 	{

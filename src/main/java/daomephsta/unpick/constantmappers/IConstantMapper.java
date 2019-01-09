@@ -31,6 +31,7 @@ public interface IConstantMapper
 	 * @param methodOwner the internal name of the class that owns the method.
 	 * @param methodName the name of the method.
 	 * @param methodDescriptor the descriptor of the method.
+	 * @param parameterIndex the index of the parameter being checked
 	 * @return true if this mapper targets the parameter of the method with a 
 	 * parameter index of {@code parameterIndex}.
 	 */

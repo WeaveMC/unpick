@@ -33,7 +33,7 @@ public class FlagDefinition extends AbstractConstantDefinition<FlagDefinition>
 	 * the represented flag.
 	 * @param name the name of the represented flag.
 	 * @param descriptor the descriptor of the represented flag.
-	 * @param the value of the the represented flag, as a String.
+	 * @param valueString the value of the the represented flag, as a String.
 	 */
 	public FlagDefinition(String owner, String name, Type descriptor, String valueString)
 	{
