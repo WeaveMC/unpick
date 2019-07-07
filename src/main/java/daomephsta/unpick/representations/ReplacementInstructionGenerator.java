@@ -9,6 +9,8 @@ import daomephsta.unpick.constantresolvers.IConstantResolver;
  */
 public interface ReplacementInstructionGenerator
 {
+	public abstract boolean canReplace(IConstantResolver constantResolver, Object value);
+	
 	/**
 	 * Generates replacement instructions for the provided value
 	 * @param constantResolver an instance of IConstantResolver

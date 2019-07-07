@@ -12,7 +12,7 @@ import daomephsta.unpick.constantresolvers.IConstantResolver;
  * A group of constants represented by {@link SimpleConstantDefinition}s.
  * @author Daomephsta
  */
-public class SimpleConstantGroup implements ReplacementInstructionGenerator
+public class SimpleConstantGroup extends AbstractConstantGroup<SimpleConstantDefinition>
 {
 	private final Map<Object, SimpleConstantDefinition> resolvedConstantDefinitions = new HashMap<>();
 	private final Collection<SimpleConstantDefinition> unresolvedConstantDefinitions = new ArrayList<>();
@@ -21,12 +21,20 @@ public class SimpleConstantGroup implements ReplacementInstructionGenerator
 	 * Adds a constant definition to this group.
 	 * @param constantDefinition a constant definition.
 	 */
+	@Override
 	public void add(SimpleConstantDefinition constantDefinition)
 	{
 		if (constantDefinition.isResolved())
 			resolvedConstantDefinitions.put(constantDefinition.getValue(), constantDefinition);
 		else 
 			unresolvedConstantDefinitions.add(constantDefinition);
+	}
+	
+	@Override
+	public boolean canReplace(IConstantResolver constantResolver, Object value)
+	{
+		resolveAllConstants(constantResolver);
+		return resolvedConstantDefinitions.containsKey(value);
 	}
 	
 	/**
@@ -43,8 +51,8 @@ public class SimpleConstantGroup implements ReplacementInstructionGenerator
 		resolveAllConstants(constantResolver);
 		
 		SimpleConstantDefinition constantDefinition = resolvedConstantDefinitions.get(value);
-		
 		InsnList replacementInstructions = new InsnList();
+		
 		replacementInstructions.add(new FieldInsnNode(Opcodes.GETSTATIC, constantDefinition.getOwner(), constantDefinition.getName(), 
 			constantDefinition.getDescriptorString()));
 		
