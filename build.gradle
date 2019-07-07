@@ -20,7 +20,8 @@ dependencies {
 	implementation 'org.ow2.asm:asm-util:7.0'
 
     // Use JUnit test framework
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.+'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.+'
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
