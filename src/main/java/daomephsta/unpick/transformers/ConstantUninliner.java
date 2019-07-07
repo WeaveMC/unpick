@@ -3,11 +3,11 @@ package daomephsta.unpick.transformers;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.*;
 
+import daomephsta.unpick.AbstractInsnNodes;
 import daomephsta.unpick.constantmappers.IConstantMapper;
 /**
  * Uninlines inlined values, mapping them to constants using the specified
@@ -80,9 +80,10 @@ public class ConstantUninliner
 		{
 			if (!mapper.targets(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex))
 				continue;
-			for (AbstractInsnNode sourceInsn : frames[instructionIndex].getStack(parameterIndex).insns)
+			Frame<SourceValue> frame = frames[instructionIndex];
+			for (AbstractInsnNode sourceInsn : frame.getStack(frame.getStackSize() - parameterTypes.length + parameterIndex).insns)
 			{
-				Object constantValue = getConstantValue(sourceInsn);
+				Object constantValue = AbstractInsnNodes.getLiteralValue(sourceInsn);
 				if (constantValue != null)
 				{
 					InsnList replacementInstructions = mapper.map(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, constantValue);
@@ -90,53 +91,6 @@ public class ConstantUninliner
 						replacements.put(sourceInsn, replacementInstructions);
 				}
 			}
-		}
-	}
-	
-	private Object getConstantValue(AbstractInsnNode insn)
-	{
-		switch (insn.getOpcode())
-		{
-		case Opcodes.BIPUSH:
-		case Opcodes.SIPUSH:
-			return ((IntInsnNode) insn).operand;
-		case Opcodes.LDC:
-			return ((LdcInsnNode) insn).cst;
-			
-		case Opcodes.ICONST_M1:
-			return -1;
-		case Opcodes.ICONST_0:
-			return 0;
-		case Opcodes.ICONST_1:
-			return 1;
-		case Opcodes.ICONST_2:
-			return 2;
-		case Opcodes.ICONST_3:
-			return 3;
-		case Opcodes.ICONST_4:
-			return 4;
-		case Opcodes.ICONST_5:
-			return 5;
-			
-		case Opcodes.LCONST_0:
-			return 0L;
-		case Opcodes.LCONST_1:
-			return 1L;
-			
-		case Opcodes.FCONST_0:
-			return 0F;
-		case Opcodes.FCONST_1:
-			return 1F;
-		case Opcodes.FCONST_2:
-			return 2F;
-			
-		case Opcodes.DCONST_0:
-			return 0D;
-		case Opcodes.DCONST_1:
-			return 1D;
-			
-		default:
-			return null;
 		}
 	}
 }
