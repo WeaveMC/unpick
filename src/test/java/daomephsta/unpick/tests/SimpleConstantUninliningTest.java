@@ -100,6 +100,15 @@ public class SimpleConstantUninliningTest
 		
 		testConstants(constants, constantNames, "doubleConsumer", "(D)V");
 	}
+	
+	@Test
+	public void testStringConstants()
+	{
+		String[] constants = {Constants.STRING_CONST_FOO, Constants.STRING_CONST_BAR};
+		String[] constantNames = {"STRING_CONST_FOO", "STRING_CONST_BAR"};
+		
+		testConstants(constants, constantNames, "stringConsumer", "(Ljava/lang/String;)V");
+	}
 
 	private void testConstants(Object[] constants, String[] constantNames, String constantConsumerName, String constantConsumerDescriptor)
 	{
