@@ -70,6 +70,8 @@ public class DataDrivenConstantMapper implements IConstantMapper
 			throw new UnpickSyntaxException(String.format("The constant group '%s' does not exist. Target Method: %s Parameter Index: %d",
 				constantGroupID, methodKey, parameterIndex));
 		}
+		if (!constantGroup.canReplace(constantResolver, value))
+			return null;
 		
 		return constantGroup.createReplacementInstructions(constantResolver, value);
 	}

@@ -11,7 +11,7 @@ import daomephsta.unpick.constantresolvers.IConstantResolver;
  * A group of flags represented by {@link FlagDefinition}s.
  * @author Daomephsta
  */
-public class FlagConstantGroup implements ReplacementInstructionGenerator
+public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
 {	
 	private final Collection<FlagDefinition> resolvedConstantDefinitions = new ArrayList<>();
 	private final Collection<FlagDefinition> unresolvedConstantDefinitions = new ArrayList<>();
@@ -20,12 +20,19 @@ public class FlagConstantGroup implements ReplacementInstructionGenerator
 	 * Adds a flag to this group.
 	 * @param flagDefinition a constant definition.
 	 */
+	@Override
 	public void add(FlagDefinition flagDefinition)
 	{
 		if (flagDefinition.isResolved())
 			resolvedConstantDefinitions.add(flagDefinition);
 		else 
 			unresolvedConstantDefinitions.add(flagDefinition);
+	}
+	
+	@Override
+	public boolean canReplace(IConstantResolver constantResolver, Object value)
+	{
+		return value instanceof Number;
 	}
 	
 	@Override
