@@ -1,4 +1,4 @@
-package unpick;
+package daomephsta.unpick.tests;
 
 public class FlagUninliningTest
 {
