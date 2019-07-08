@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.objectweb.asm.Opcodes.IOR;
 import static org.objectweb.asm.Opcodes.LOR;
+import static org.objectweb.asm.Opcodes.RETURN;
 
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;
@@ -40,7 +41,7 @@ public class FlagUninliningTest
 	}
 	
 	@Test
-	public void testIntFlags()
+	public void testKnownIntFlags()
 	{
 		Integer[] testConstants = {0b1100, 0b0100, 0b1010, 0b0111};
 		String[][] expectedConstantCombinations = 
@@ -52,6 +53,13 @@ public class FlagUninliningTest
 			};
 		String[] constantNames = {"INT_FLAG_BIT_0", "INT_FLAG_BIT_1", "INT_FLAG_BIT_2", "INT_FLAG_BIT_3"};
 		testConstants(testConstants, expectedConstantCombinations, constantNames, "intConsumer", "(I)V");
+	}
+	
+	@Test
+	public void testUnknownIntFlags()
+	{
+		Integer[] testConstants = {0b0000, 0b100000, 0b01000, 0b11000};
+		testUnknownConstants(testConstants, "intConsumer", "(I)V");
 	}
 
 	@Test
@@ -67,6 +75,13 @@ public class FlagUninliningTest
 			};
 		String[] constantNames = {"LONG_FLAG_BIT_0", "LONG_FLAG_BIT_1", "LONG_FLAG_BIT_2", "LONG_FLAG_BIT_3"};
 		testConstants(testConstants, expectedConstantCombinations, constantNames, "longConsumer", "(J)V");
+	}
+	
+	@Test
+	public void testUnknownLongFlags()
+	{
+		Long[] testConstants = {0b0000L, 0b100000L, 0b01000L, 0b11000L};
+		testUnknownConstants(testConstants, "longConsumer", "(J)V");
 	}
 
 	private void testConstants(Object[] testConstants, String[][] expectedConstantCombinations, String[] constantNames, String constantConsumerName, String constantConsumerDescriptor)
@@ -98,9 +113,7 @@ public class FlagUninliningTest
 			MethodNode mockInvocation = InstructionMocker.mockInvokeStatic(Methods.class, 
 					constantConsumerName, constantConsumerDescriptor, testConstants[i]);
 			int invocationInsnIndex = 1;
-			ASMAssertions.assertInvokesMethod(mockInvocation.instructions.get(invocationInsnIndex), Methods.class, constantConsumerName, 
-					constantConsumerDescriptor);
-			assertEquals(expectedLiteralValue, AbstractInsnNodes.getLiteralValue(mockInvocation.instructions.get(invocationInsnIndex - 1)));
+			checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, expectedLiteralValue, mockInvocation, invocationInsnIndex);
 			uninliner.transformMethod(InstructionMocker.CLASS_NAME, mockInvocation);
 			int minimumInsnCount = 2 * (expectedConstantCombination.length - 1) + 1;
 			assertTrue(mockInvocation.instructions.size() >=  minimumInsnCount, 
@@ -117,5 +130,44 @@ public class FlagUninliningTest
 				ASMAssertions.assertOpcode(mockInvocation.instructions.get(j + 1), orOpcode);
 			}
 		}
+	}
+	
+	private void testUnknownConstants(Object[] constants, String constantConsumerName, String constantConsumerDescriptor)
+	{
+		IConstantMapper mapper = MockConstantMapper.builder(new ClasspathConstantResolver())
+				.simpleConstantGroup("test")
+				.add()
+				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
+					.remapParameter(0, "test")
+				.add()
+				.build();
+
+		ConstantUninliner uninliner = new ConstantUninliner(mapper);
+		for (int i = 0; i < constants.length; i++)
+		{
+			Object expectedLiteralValue = constants[i];
+			MethodNode mockInvocation = InstructionMocker.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 
+					expectedLiteralValue);
+			int invocationInsnIndex = 1;
+			checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, expectedLiteralValue, mockInvocation, 
+					invocationInsnIndex);
+			uninliner.transformMethod(InstructionMocker.CLASS_NAME, mockInvocation);
+			//Should be unchanged, so this should still pass
+			checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, expectedLiteralValue, mockInvocation, 
+					invocationInsnIndex);
+		}
+	}
+
+	private void checkMockInvocationStructure(String constantConsumerName,
+			String constantConsumerDescriptor, Object expectedLiteralValue,
+			MethodNode mockInvocation, int invocationInsnIndex)
+	{
+		int expectedInstructionCount = 3;
+		assertEquals(expectedInstructionCount, mockInvocation.instructions.size(), 
+				String.format("Expected %d instructions, found %d", expectedInstructionCount, mockInvocation.instructions.size()));
+		assertEquals(expectedLiteralValue, AbstractInsnNodes.getLiteralValue(mockInvocation.instructions.get(invocationInsnIndex - 1)));
+		ASMAssertions.assertInvokesMethod(mockInvocation.instructions.get(invocationInsnIndex), Methods.class, 
+				constantConsumerName, constantConsumerDescriptor);
+		ASMAssertions.assertOpcode(mockInvocation.instructions.get(invocationInsnIndex + 1), RETURN);
 	}
 }
