@@ -92,28 +92,22 @@ public class InstructionFactory
 	
 	public static AbstractInsnNode pushesLong(long l)
 	{
+		//Longs seem to be pushed using their consts or LDC, never BIPUSH or SIPUSH
 		if (l == 0)
 			return new InsnNode(LCONST_0);
 		else if (l == 1)
 			return new InsnNode(LCONST_1);
-		else if (l >= Byte.MIN_VALUE && l <= Byte.MAX_VALUE)
-			return new IntInsnNode(BIPUSH, (int) l);
-		else if (l >= Short.MIN_VALUE && l <= Short.MAX_VALUE)
-			return new IntInsnNode(SIPUSH, (int) l);
 		else
 			return new LdcInsnNode(l);
 	}
 	
 	public static void pushesLong(MethodVisitor method, long l)
 	{
+		//Longs seem to be pushed using their consts or LDC, never BIPUSH or SIPUSH
 		if (l == 0)
 			method.visitInsn(LCONST_0);
 		else if (l == 1)
-			method.visitInsn(LCONST_1);
-		else if (l >= Byte.MIN_VALUE && l <= Byte.MAX_VALUE)
-			method.visitIntInsn(BIPUSH, (int) l);
-		else if (l >= Short.MIN_VALUE && l <= Short.MAX_VALUE)
-			method.visitIntInsn(SIPUSH, (int) l);
+			method.visitInsn(LCONST_1); 
 		else
 			method.visitLdcInsn(l);
 	}
