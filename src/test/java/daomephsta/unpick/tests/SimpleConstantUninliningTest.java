@@ -126,14 +126,14 @@ public class SimpleConstantUninliningTest
 		for (int i = 0; i < constants.length; i++)
 		{
 			Object expectedLiteralValue = constants[i];
-			MethodNode methodInvocation = MethodInvocationFactory.staticMethod(Methods.class, constantConsumerName, constantConsumerDescriptor, 
+			MethodNode mockInvocation = InstructionMocker.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 
 					expectedLiteralValue);
 			int invocationInsnIndex = 2;
-			ASMAssertions.assertInvokesMethod(methodInvocation.instructions.get(invocationInsnIndex), Methods.class, constantConsumerName, 
+			ASMAssertions.assertInvokesMethod(mockInvocation.instructions.get(invocationInsnIndex), Methods.class, constantConsumerName, 
 					constantConsumerDescriptor);
-			assertEquals(expectedLiteralValue, AbstractInsnNodes.getLiteralValue(methodInvocation.instructions.get(invocationInsnIndex - 1)));
-			uninliner.transformMethod(MethodInvocationFactory.CLASS_NAME, methodInvocation);
-			ASMAssertions.assertReadsField(methodInvocation.instructions.get(invocationInsnIndex - 1), Constants.class, constantNames[i], 
+			assertEquals(expectedLiteralValue, AbstractInsnNodes.getLiteralValue(mockInvocation.instructions.get(invocationInsnIndex - 1)));
+			uninliner.transformMethod(InstructionMocker.CLASS_NAME, mockInvocation);
+			ASMAssertions.assertReadsField(mockInvocation.instructions.get(invocationInsnIndex - 1), Constants.class, constantNames[i], 
 					constantTypeDescriptor);
 		}
 	}

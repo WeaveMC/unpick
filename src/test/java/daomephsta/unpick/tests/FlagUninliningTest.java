@@ -95,26 +95,26 @@ public class FlagUninliningTest
 		{
 			Object expectedLiteralValue = testConstants[i];
 			String[] expectedConstantCombination = expectedConstantCombinations[i];
-			MethodNode methodInvocation = InstructionMocker.mockInvokeStatic(Methods.class, 
+			MethodNode mockInvocation = InstructionMocker.mockInvokeStatic(Methods.class, 
 					constantConsumerName, constantConsumerDescriptor, testConstants[i]);
 			int invocationInsnIndex = 1;
-			ASMAssertions.assertInvokesMethod(methodInvocation.instructions.get(invocationInsnIndex), Methods.class, constantConsumerName, 
+			ASMAssertions.assertInvokesMethod(mockInvocation.instructions.get(invocationInsnIndex), Methods.class, constantConsumerName, 
 					constantConsumerDescriptor);
-			assertEquals(expectedLiteralValue, AbstractInsnNodes.getLiteralValue(methodInvocation.instructions.get(invocationInsnIndex - 1)));
-			uninliner.transformMethod(InstructionMocker.CLASS_NAME, methodInvocation);
+			assertEquals(expectedLiteralValue, AbstractInsnNodes.getLiteralValue(mockInvocation.instructions.get(invocationInsnIndex - 1)));
+			uninliner.transformMethod(InstructionMocker.CLASS_NAME, mockInvocation);
 			int minimumInsnCount = 2 * (expectedConstantCombination.length - 1) + 1;
-			assertTrue(methodInvocation.instructions.size() >=  minimumInsnCount, 
-					String.format("Expected at least %d instructions, found %d", minimumInsnCount, methodInvocation.instructions.size()));
+			assertTrue(mockInvocation.instructions.size() >=  minimumInsnCount, 
+					String.format("Expected at least %d instructions, found %d", minimumInsnCount, mockInvocation.instructions.size()));
 			invocationInsnIndex += minimumInsnCount - 1;
-			ASMAssertions.assertInvokesMethod(methodInvocation.instructions.get(invocationInsnIndex), Methods.class, 
+			ASMAssertions.assertInvokesMethod(mockInvocation.instructions.get(invocationInsnIndex), Methods.class, 
 					constantConsumerName, constantConsumerDescriptor);
-			ASMAssertions.assertReadsField(methodInvocation.instructions.get(0), Constants.class, 
+			ASMAssertions.assertReadsField(mockInvocation.instructions.get(0), Constants.class, 
 					expectedConstantCombination[0], constantTypeDescriptor);
 			for (int j = 1; j < expectedConstantCombination.length; j += 2)
 			{
-				ASMAssertions.assertReadsField(methodInvocation.instructions.get(j), Constants.class, 
+				ASMAssertions.assertReadsField(mockInvocation.instructions.get(j), Constants.class, 
 						expectedConstantCombination[j], constantTypeDescriptor);
-				ASMAssertions.assertOpcode(methodInvocation.instructions.get(j + 1), orOpcode);
+				ASMAssertions.assertOpcode(mockInvocation.instructions.get(j + 1), orOpcode);
 			}
 		}
 	}
