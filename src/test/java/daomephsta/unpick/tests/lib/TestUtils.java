@@ -5,12 +5,26 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.util.*;
 
 public class TestUtils
 {	
+	public static void printMethod(MethodNode methodNode)
+	{
+		StringWriter w = new StringWriter();
+		try(PrintWriter pw = new PrintWriter(w))
+		{
+			Printer printer = new Textifier();
+			ClassVisitor tracer = new TraceClassVisitor(null, printer, null);
+			methodNode.accept(tracer);
+			printer.print(pw);
+		}
+		System.out.println(w);
+	}
+	
 	public static void printInstructions(MethodNode methodNode)
 	{
 		StringWriter w = new StringWriter();
