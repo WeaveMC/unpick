@@ -120,7 +120,8 @@ public class SimpleConstantUninliningTest
 					.remapParameter(0, "test")
 				.add()
 				.build();
-		
+
+		String constantTypeDescriptor = Type.getDescriptor(TestUtils.unboxedType(constants.getClass().getComponentType()));
 		ConstantUninliner uninliner = new ConstantUninliner(mapper);
 		for (int i = 0; i < constants.length; i++)
 		{
@@ -132,7 +133,6 @@ public class SimpleConstantUninliningTest
 					constantConsumerDescriptor);
 			assertEquals(expectedLiteralValue, AbstractInsnNodes.getLiteralValue(methodInvocation.instructions.get(invocationInsnIndex - 1)));
 			uninliner.transformMethod(MethodInvocationFactory.CLASS_NAME, methodInvocation);
-			String constantTypeDescriptor = Type.getDescriptor(TestUtils.unboxedType(constants.getClass().getComponentType()));
 			ASMAssertions.assertReadsField(methodInvocation.instructions.get(invocationInsnIndex - 1), Constants.class, constantNames[i], 
 					constantTypeDescriptor);
 		}
