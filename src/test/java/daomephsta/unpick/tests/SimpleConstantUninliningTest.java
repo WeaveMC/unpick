@@ -1,11 +1,9 @@
 package daomephsta.unpick.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.objectweb.asm.Opcodes.RETURN;
 
 import org.junit.jupiter.api.Test;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -190,7 +188,6 @@ public class SimpleConstantUninliningTest
 				.add()
 				.build();
 
-		String constantTypeDescriptor = Type.getDescriptor(TestUtils.unboxedType(constants.getClass().getComponentType()));
 		ConstantUninliner uninliner = new ConstantUninliner(mapper);
 		for (int i = 0; i < constants.length; i++)
 		{
