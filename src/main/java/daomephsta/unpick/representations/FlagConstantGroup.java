@@ -50,21 +50,16 @@ public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
 		InsnList replacementInstructions = new InsnList();
 		if (matches.isEmpty())
 			return null;
-		if (matches.size() >= 1)
-		{
-			FlagDefinition match0 = matches.get(0);
-			replacementInstructions.add(
+
+		FlagDefinition match0 = matches.get(0);
+		replacementInstructions.add(
 				new FieldInsnNode(Opcodes.GETSTATIC, match0.getOwner(), match0.getName(), match0.getDescriptorString()));
-		}
-		if (matches.size() >= 2)
+		for (int i = 1; i < matches.size(); i++)
 		{
-			for (int i = 1; i < matches.size(); i++)
-			{
-				FlagDefinition match = matches.get(i);
-				replacementInstructions.add(
+			FlagDefinition match = matches.get(i);
+			replacementInstructions.add(
 					new FieldInsnNode(Opcodes.GETSTATIC, match.getOwner(), match.getName(), match.getDescriptorString()));
-				replacementInstructions.add(new InsnNode(value instanceof Long ? Opcodes.LOR : Opcodes.IOR));
-			}
+			replacementInstructions.add(new InsnNode(value instanceof Long ? Opcodes.LOR : Opcodes.IOR));
 		}
 		return replacementInstructions;
 	}
