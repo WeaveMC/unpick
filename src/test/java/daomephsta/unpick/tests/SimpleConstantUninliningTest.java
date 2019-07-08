@@ -128,7 +128,7 @@ public class SimpleConstantUninliningTest
 			Object expectedLiteralValue = constants[i];
 			MethodNode mockInvocation = InstructionMocker.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 
 					expectedLiteralValue);
-			int invocationInsnIndex = 2;
+			int invocationInsnIndex = 1;
 			ASMAssertions.assertInvokesMethod(mockInvocation.instructions.get(invocationInsnIndex), Methods.class, constantConsumerName, 
 					constantConsumerDescriptor);
 			assertEquals(expectedLiteralValue, AbstractInsnNodes.getLiteralValue(mockInvocation.instructions.get(invocationInsnIndex - 1)));
