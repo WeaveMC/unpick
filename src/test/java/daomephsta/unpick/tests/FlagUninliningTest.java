@@ -135,7 +135,7 @@ public class FlagUninliningTest
 	private void testUnknownConstants(Object[] constants, String constantConsumerName, String constantConsumerDescriptor)
 	{
 		IConstantMapper mapper = MockConstantMapper.builder(new ClasspathConstantResolver())
-				.simpleConstantGroup("test")
+				.flagConstantGroup("test")
 				.add()
 				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
 					.remapParameter(0, "test")
