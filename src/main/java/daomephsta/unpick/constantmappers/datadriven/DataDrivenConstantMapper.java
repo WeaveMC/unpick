@@ -2,27 +2,18 @@ package daomephsta.unpick.constantmappers.datadriven;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.Map;
 
-import org.objectweb.asm.tree.InsnList;
-
-import daomephsta.unpick.constantmappers.IConstantMapper;
+import daomephsta.unpick.constantmappers.SimpleAbstractConstantMapper;
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
 import daomephsta.unpick.constantmappers.datadriven.parser.V1Parser;
 import daomephsta.unpick.constantresolvers.IConstantResolver;
-import daomephsta.unpick.representations.ReplacementInstructionGenerator;
-import daomephsta.unpick.representations.TargetMethod;
 
 /**
  * Maps inlined values to constants, using a mapping defined in a file
  * @author Daomephsta
  */
-public class DataDrivenConstantMapper implements IConstantMapper
-{
-	private final Map<String, ReplacementInstructionGenerator> constantGroups = new HashMap<>();
-	private final Map<String, TargetMethod> targetMethods = new HashMap<>();
-	private final IConstantResolver constantResolver;
-	
+public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
+{	
 	/**
 	 * Constructs a new data driven constant mapper, using the mappings in {@code mappingSource}
 	 * and resolving constants using {@code constantResolver}.
@@ -32,7 +23,7 @@ public class DataDrivenConstantMapper implements IConstantMapper
 	 */
 	public DataDrivenConstantMapper(InputStream mappingSource, IConstantResolver constantResolver)
 	{
-		this.constantResolver = constantResolver;
+		super(new HashMap<>(), new HashMap<>(), constantResolver);
 		try(LineNumberReader reader = new LineNumberReader(new InputStreamReader(mappingSource)))
 		{
 			String line1 = reader.readLine();
@@ -45,39 +36,5 @@ public class DataDrivenConstantMapper implements IConstantMapper
 		{
 			e.printStackTrace();
 		}
-	}
-	
-	@Override
-	public boolean targets(String methodOwner, String methodName, String methodDescriptor)
-	{
-		return targetMethods.containsKey(getMethodKey(methodOwner, methodName, methodDescriptor));
-	}
-	
-	@Override
-	public boolean targets(String methodOwner, String methodName, String methodDescriptor, int parameterIndex)
-	{
-		return targetMethods.get(getMethodKey(methodOwner, methodName, methodDescriptor)).hasParameterConstantGroup(parameterIndex);
-	}
-	
-	@Override
-	public InsnList map(String methodOwner, String methodName, String methodDescriptor, int parameterIndex, Object value)
-	{	
-		String methodKey = getMethodKey(methodOwner, methodName, methodDescriptor);
-		String constantGroupID = targetMethods.get(methodKey).getParameterConstantGroup(parameterIndex);
-		ReplacementInstructionGenerator constantGroup = constantGroups.get(constantGroupID);
-		if (constantGroup == null)
-		{
-			throw new UnpickSyntaxException(String.format("The constant group '%s' does not exist. Target Method: %s Parameter Index: %d",
-				constantGroupID, methodKey, parameterIndex));
-		}
-		if (!constantGroup.canReplace(constantResolver, value))
-			return null;
-		
-		return constantGroup.createReplacementInstructions(constantResolver, value);
-	}
-	
-	private String getMethodKey(String methodOwner, String methodName, String methodDescriptor)
-	{
-		return methodOwner + '.' + methodName + methodDescriptor;
 	}
 }

@@ -5,64 +5,23 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.InsnList;
 
-import daomephsta.unpick.constantmappers.IConstantMapper;
-import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
+import daomephsta.unpick.MethodDescriptors;
+import daomephsta.unpick.constantmappers.SimpleAbstractConstantMapper;
 import daomephsta.unpick.constantresolvers.IConstantResolver;
 import daomephsta.unpick.representations.*;
 
-public class MockConstantMapper implements IConstantMapper
+public class MockConstantMapper extends SimpleAbstractConstantMapper
 {
-	private final Map<String, ReplacementInstructionGenerator> constantGroups;
-	private final Map<String, TargetMethod> targetMethods;
-	private final IConstantResolver constantResolver;
-	
 	private MockConstantMapper(Map<String, ReplacementInstructionGenerator> constantGroups, 
 			Map<String, TargetMethod> targetMethods, IConstantResolver constantResolver)
 	{
-		this.constantGroups = constantGroups;
-		this.targetMethods = targetMethods;
-		this.constantResolver = constantResolver;
+		super(constantGroups, targetMethods, constantResolver);
 	}
 
 	public static Builder builder(IConstantResolver constantResolver)
 	{
 		return new Builder(constantResolver);
-	}
-	
-	@Override
-	public boolean targets(String methodOwner, String methodName, String methodDescriptor)
-	{
-		return targetMethods.containsKey(getMethodKey(methodOwner, methodName, methodDescriptor));
-	}
-	
-	@Override
-	public boolean targets(String methodOwner, String methodName, String methodDescriptor, int parameterIndex)
-	{
-		return targetMethods.get(getMethodKey(methodOwner, methodName, methodDescriptor)).hasParameterConstantGroup(parameterIndex);
-	}
-	
-	@Override
-	public InsnList map(String methodOwner, String methodName, String methodDescriptor, int parameterIndex, Object value)
-	{	
-		String methodKey = getMethodKey(methodOwner, methodName, methodDescriptor);
-		String constantGroupID = targetMethods.get(methodKey).getParameterConstantGroup(parameterIndex);
-		ReplacementInstructionGenerator constantGroup = constantGroups.get(constantGroupID);
-		if (constantGroup == null)
-		{
-			throw new UnpickSyntaxException(String.format("The constant group '%s' does not exist. Target Method: %s Parameter Index: %d",
-				constantGroupID, methodKey, parameterIndex));
-		}
-		if (!constantGroup.canReplace(constantResolver, value))
-			return null;
-		
-		return constantGroup.createReplacementInstructions(constantResolver, value);
-	}
-	
-	private static String getMethodKey(String methodOwner, String methodName, String methodDescriptor)
-	{
-		return methodOwner + '.' + methodName + methodDescriptor;
 	}
 	
 	public static class Builder
@@ -131,7 +90,7 @@ public class MockConstantMapper implements IConstantMapper
 		public Builder add()
 		{
 			TargetMethod method = new TargetMethod(owner, name, Type.getMethodType(descriptor), parameterConstantGroups);
-			if (parent.targetMethods.putIfAbsent(getMethodKey(owner, name, descriptor), method) != null)
+			if (parent.targetMethods.putIfAbsent(MethodDescriptors.getMethodKey(owner, name, descriptor), method) != null)
 				throw new IllegalStateException(method + " is already targeted");
 			return parent;
 		}
