@@ -3,14 +3,12 @@ package daomephsta.unpick.representations;
 import java.util.*;
 
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
 
-import daomephsta.unpick.AbstractInsnNodes;
-import daomephsta.unpick.FlagStatement;
+import daomephsta.unpick.*;
 import daomephsta.unpick.FlagStatement.BitOp;
 import daomephsta.unpick.constantresolvers.IConstantResolver;
-import daomephsta.unpick.tests.lib.InstructionFactory;
-import daomephsta.unpick.tests.lib.TestUtils;
 
 /**
  * A group of flags represented by {@link FlagDefinition}s.
@@ -82,11 +80,12 @@ public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
 		}
 		if (match == null)
 			return Optional.empty();
-		
+
+		IntegerType integerType = IntegerType.from(literal.getClass());
 		InsnList replacementInstructions = new InsnList();
 		replacementInstructions.add(new FieldInsnNode(Opcodes.GETSTATIC, match.getOwner(), match.getName(), match.getDescriptorString()));
-		replacementInstructions.add(literal instanceof Long ? InstructionFactory.pushesLong(-1) : InstructionFactory.pushesInt(-1));
-		replacementInstructions.add(new InsnNode(literal instanceof Long ? Opcodes.LXOR : Opcodes.IXOR));
+		replacementInstructions.add(integerType.createLiteralPushInsn(-1));
+		replacementInstructions.add(integerType.createXorInsn());
 		return Optional.of(replacementInstructions);
 	}
 
@@ -109,21 +108,18 @@ public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
 		
 		InsnList replacementInstructions = new InsnList();
 		FlagDefinition match0 = matches.get(0);
-		int orOpcode = literal instanceof Long ? Opcodes.LOR : Opcodes.IOR;
+		IntegerType integerType = IntegerType.from(literal.getClass());
 		replacementInstructions.add(new FieldInsnNode(Opcodes.GETSTATIC, match0.getOwner(), match0.getName(), match0.getDescriptorString()));
 		for (int i = 1; i < matches.size(); i++)
 		{
 			FlagDefinition match = matches.get(i);
 			replacementInstructions.add(new FieldInsnNode(Opcodes.GETSTATIC, match.getOwner(), match.getName(), match.getDescriptorString()));
-			replacementInstructions.add(new InsnNode(orOpcode));
+			replacementInstructions.add(integerType.createOrInsn());
 		}
 		if (remainder != 0)
 		{
-			AbstractInsnNode remainderLiteral = literal instanceof Long 
-					? InstructionFactory.pushesLong(literal.longValue()) 
-					: InstructionFactory.pushesInt(literal.intValue());
-			replacementInstructions.add(remainderLiteral);
-			replacementInstructions.add(new InsnNode(orOpcode));
+			replacementInstructions.add(integerType.createLiteralPushInsn(literal.longValue()));
+			replacementInstructions.add(integerType.createOrInsn());
 		}
 		return Optional.of(replacementInstructions);
 	}
