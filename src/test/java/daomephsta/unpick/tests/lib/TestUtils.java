@@ -1,41 +1,22 @@
 package daomephsta.unpick.tests.lib;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.util.*;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.Value;
+
+import daomephsta.unpick.Utils;
 
 public class TestUtils
 {	
-	public static void printMethod(MethodNode methodNode)
+	public static void printVisitable(Consumer<MethodVisitor> visitable)
 	{
-		StringWriter w = new StringWriter();
-		try(PrintWriter pw = new PrintWriter(w))
-		{
-			Printer printer = new Textifier();
-			ClassVisitor tracer = new TraceClassVisitor(null, printer, null);
-			methodNode.accept(tracer);
-			printer.print(pw);
-		}
-		System.out.println(w);
-	}
-	
-	public static void printInstructions(MethodNode methodNode)
-	{
-		StringWriter w = new StringWriter();
-		try(PrintWriter pw = new PrintWriter(w))
-		{
-			Printer printer = new Textifier();
-			MethodVisitor tracer = new TraceMethodVisitor(printer);
-			methodNode.instructions.accept(tracer);
-			printer.print(pw);
-		}
-		System.out.println(w);
+		System.out.println(Utils.visitableToString(visitable));
 	}
 	
 	private static final Map<Class<?>, Class<?>> BOXED_TO_UNBOXED = new HashMap<>();
@@ -55,5 +36,15 @@ public class TestUtils
 	public static Class<?> unboxedType(Class<?> boxed)
 	{
 		return BOXED_TO_UNBOXED.getOrDefault(boxed, boxed);
+	}
+	
+	public static <V extends Value> Stream<V> streamStack(Frame<V> frame)
+	{
+		return IntStream.range(0, frame.getStackSize()).mapToObj(frame::getStack);
+	}
+	
+	public static String toBase2And10(long l)
+	{
+		return l + " = 0b" + Long.toBinaryString(l);
 	}
 }
