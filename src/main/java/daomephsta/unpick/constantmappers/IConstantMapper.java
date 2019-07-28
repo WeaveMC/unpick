@@ -1,6 +1,6 @@
 package daomephsta.unpick.constantmappers;
 
-import org.objectweb.asm.tree.InsnList;
+import daomephsta.unpick.representations.ReplacementInstructionGenerator.Context;
 
 /**
  * Defines a mapping of inlined values to replacement instructions.
@@ -14,10 +14,9 @@ public interface IConstantMapper
 	 * @param methodName the name of the target method.
 	 * @param methodDescriptor the descriptor of the target method.
 	 * @param parameterIndex the index of the parameter of the target method that {@code value} is passed as.
-	 * @param value the inlined value.
-	 * @return A list of instructions to replace the inlined value with.
+	 * @param context the inlined value.
 	 */
-	public InsnList map(String methodOwner, String methodName, String methodDescriptor, int parameterIndex, Object value);
+	public void map(String methodOwner, String methodName, String methodDescriptor, int parameterIndex, Context context);
 	
 	/**
 	 * @param methodOwner the internal name of the class that owns the method.

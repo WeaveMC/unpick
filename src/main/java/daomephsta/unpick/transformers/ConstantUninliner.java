@@ -1,14 +1,13 @@
 package daomephsta.unpick.transformers;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.*;
 
-import daomephsta.unpick.AbstractInsnNodes;
 import daomephsta.unpick.constantmappers.IConstantMapper;
+import daomephsta.unpick.constantresolvers.IConstantResolver;
+import daomephsta.unpick.representations.ReplacementInstructionGenerator.Context;
+import daomephsta.unpick.representations.ReplacementSet;
 /**
  * Uninlines inlined values, mapping them to constants using the specified
  * instance of {@link IConstantMapper} 
@@ -17,6 +16,7 @@ import daomephsta.unpick.constantmappers.IConstantMapper;
 public class ConstantUninliner
 {
 	private final IConstantMapper mapper;
+	private final IConstantResolver constantResolver;
 	private final Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
 
 	/**
@@ -24,9 +24,10 @@ public class ConstantUninliner
 	 * values to constants with {@code mapper}.
 	 * @param mapper an instance of IConstantMapper.
 	 */
-	public ConstantUninliner(IConstantMapper mapper)
+	public ConstantUninliner(IConstantMapper mapper, IConstantResolver constantResolver)
 	{
 		this.mapper = mapper;
+		this.constantResolver = constantResolver;
 	}
 
 	/**
@@ -50,20 +51,16 @@ public class ConstantUninliner
 	public void transformMethod(String methodOwner, MethodNode method)
 	{
 		try
-		{
-			Map<AbstractInsnNode, InsnList> replacements = new HashMap<>();
+		{ 
+			ReplacementSet replacementSet = new ReplacementSet(method.instructions);
 			Frame<SourceValue>[] frames = analyzer.analyze(methodOwner, method);
 			for (int i = 0; i < method.instructions.size(); i++)
 			{
 				AbstractInsnNode insn = method.instructions.get(i);
 				if (insn instanceof MethodInsnNode)
-					processMethodInvocation(replacements, method, (MethodInsnNode) insn, frames, i);
+					processMethodInvocation(method, (MethodInsnNode) insn, replacementSet, frames, i);
 			}
-			for (Map.Entry<AbstractInsnNode, InsnList> replacement : replacements.entrySet())
-			{
-				method.instructions.insert(replacement.getKey(), replacement.getValue());
-				method.instructions.remove(replacement.getKey());
-			}
+			replacementSet.apply();
 		}
 		catch (AnalyzerException e)
 		{
@@ -71,25 +68,22 @@ public class ConstantUninliner
 		}
 	}
 
-	private void processMethodInvocation(Map<AbstractInsnNode, InsnList> replacements, MethodNode enclosingMethod, MethodInsnNode methodInvocation, Frame<SourceValue>[] frames, int instructionIndex)
+	private void processMethodInvocation(MethodNode enclosingMethod, MethodInsnNode methodInvocation, ReplacementSet replacementSet, 
+			Frame<SourceValue>[] frames, int instructionIndex)
 	{
 		if (!mapper.targets(methodInvocation.owner, methodInvocation.name, methodInvocation.desc))
 			return;
+		
+		Frame<SourceValue> frame = frames[instructionIndex];
 		Type[] parameterTypes = Type.getArgumentTypes(methodInvocation.desc);
 		for (int parameterIndex = 0; parameterIndex < parameterTypes.length; parameterIndex++)
 		{
 			if (!mapper.targets(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex))
 				continue;
-			Frame<SourceValue> frame = frames[instructionIndex];
 			for (AbstractInsnNode sourceInsn : frame.getStack(frame.getStackSize() - parameterTypes.length + parameterIndex).insns)
 			{
-				Object constantValue = AbstractInsnNodes.getLiteralValue(sourceInsn);
-				if (constantValue != null)
-				{
-					InsnList replacementInstructions = mapper.map(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, constantValue);
-					if (replacementInstructions != null)
-						replacements.put(sourceInsn, replacementInstructions);
-				}
+				Context context = new Context(constantResolver, replacementSet, sourceInsn, enclosingMethod.instructions, frames);
+				mapper.map(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, context);
 			}
 		}
 	}

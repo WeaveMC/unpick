@@ -4,8 +4,8 @@ import java.util.*;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.InsnList;
 
+import daomephsta.unpick.AbstractInsnNodes;
 import daomephsta.unpick.constantresolvers.IConstantResolver;
 
 /**
@@ -29,34 +29,25 @@ public class SimpleConstantGroup extends AbstractConstantGroup<SimpleConstantDef
 		else 
 			unresolvedConstantDefinitions.add(constantDefinition);
 	}
-	
+
 	@Override
-	public boolean canReplace(IConstantResolver constantResolver, Object value)
+	public boolean canReplace(Context context)
 	{
-		resolveAllConstants(constantResolver);
-		return resolvedConstantDefinitions.containsKey(value);
+		resolveAllConstants(context.getConstantResolver());
+		return AbstractInsnNodes.hasLiteralValue(context.getArgSeed()) 
+				&& resolvedConstantDefinitions.containsKey(AbstractInsnNodes.getLiteralValue(context.getArgSeed()));
 	}
 	
-	/**
-	 * Gets a constant definition by value, resolving all 
-	 * unresolved constant definitions first.
-	 * @param constantResolver an instance of IConstantResolver
-	 * to use to resolve unresolved constant definitions.
-	 * @param value the value to retrieve a constant definition for.
-	 * @return a resolved constant definition with a value equal to {@code value}
-	 */
 	@Override
-	public InsnList createReplacementInstructions(IConstantResolver constantResolver, Object value)
+	public void generateReplacements(Context context)
 	{
-		resolveAllConstants(constantResolver);
+		resolveAllConstants(context.getConstantResolver());
 		
-		SimpleConstantDefinition constantDefinition = resolvedConstantDefinitions.get(value);
-		InsnList replacementInstructions = new InsnList();
-		
-		replacementInstructions.add(new FieldInsnNode(Opcodes.GETSTATIC, constantDefinition.getOwner(), constantDefinition.getName(), 
-			constantDefinition.getDescriptorString()));
-		
-		return replacementInstructions;
+		Object literalValue = AbstractInsnNodes.getLiteralValue(context.getArgSeed());
+		SimpleConstantDefinition constantDefinition = resolvedConstantDefinitions.get(literalValue);
+		context.getReplacementSet().addReplacement(context.getArgSeed(), 
+				new FieldInsnNode(Opcodes.GETSTATIC, constantDefinition.getOwner(), 
+						constantDefinition.getName(), constantDefinition.getDescriptorString()));
 	}
 	
 	private void resolveAllConstants(IConstantResolver constantResolver)

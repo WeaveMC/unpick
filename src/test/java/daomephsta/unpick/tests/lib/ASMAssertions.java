@@ -7,6 +7,9 @@ import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.util.Printer;
 
+import daomephsta.unpick.AbstractInsnNodes;
+import daomephsta.unpick.Utils;
+
 public class ASMAssertions
 {
 	public static void assertInvokesMethod(AbstractInsnNode insn, Class<?> owner, String name, String descriptor)
@@ -17,7 +20,7 @@ public class ASMAssertions
 	public static void assertInvokesMethod(AbstractInsnNode insn, String owner, String name, String descriptor)
 	{
 		assertTrue(insn.getOpcode() >= INVOKEVIRTUAL && insn.getOpcode() <= INVOKEINTERFACE, 
-				"Instruction " + Printer.OPCODES[insn.getOpcode()] + " does not invoke a method");
+				"Instruction " + Utils.visitableToString(insn::accept).trim() + " does not invoke a method");
 		MethodInsnNode invocationInsn = (MethodInsnNode) insn;
 		assertEquals(owner, invocationInsn.owner);
 		assertEquals(name, invocationInsn.name);
@@ -32,7 +35,7 @@ public class ASMAssertions
 	public static void assertReadsField(AbstractInsnNode insn, String owner, String name, String descriptor)
 	{
 		assertTrue(insn.getOpcode() == GETFIELD | insn.getOpcode() == GETSTATIC, 
-				"Instruction "  + Printer.OPCODES[insn.getOpcode()] +  " does not read a field");
+				"Instruction "  + Utils.visitableToString(insn::accept).trim() +  " does not read a field");
 		FieldInsnNode fieldInsn = (FieldInsnNode) insn;
 		assertEquals(owner, fieldInsn.owner);
 		assertEquals(name, fieldInsn.name);
@@ -42,7 +45,13 @@ public class ASMAssertions
 	public static void assertOpcode(AbstractInsnNode node, int expectedOpcode)
 	{
 		assertEquals(expectedOpcode, node.getOpcode(), 
-				String.format("expected: <%s> but was: <%s>", Printer.OPCODES[expectedOpcode], Printer.OPCODES[node.getOpcode()]));
+				String.format("expected: <%s> but was: <%s>", Printer.OPCODES[expectedOpcode], Utils.visitableToString(node::accept).trim()));
+	}
+	
+	public static void assertIsLiteral(AbstractInsnNode node, Object expected)
+	{
+		assertTrue(AbstractInsnNodes.isLiteral(node, expected),
+				String.format("expected: literal of <%s> but was: <%s>", expected, AbstractInsnNodes.getLiteralValue(node)));
 	}
 	
 	private static String getInternalName(Class<?> clazz)

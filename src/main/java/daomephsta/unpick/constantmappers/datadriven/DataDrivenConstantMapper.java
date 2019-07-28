@@ -6,7 +6,6 @@ import java.util.HashMap;
 import daomephsta.unpick.constantmappers.SimpleAbstractConstantMapper;
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
 import daomephsta.unpick.constantmappers.datadriven.parser.V1Parser;
-import daomephsta.unpick.constantresolvers.IConstantResolver;
 
 /**
  * Maps inlined values to constants, using a mapping defined in a file
@@ -21,9 +20,9 @@ public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
 	 * @param constantResolver an instance of IConstantResolver for resolving constant types and 
 	 * values.
 	 */
-	public DataDrivenConstantMapper(InputStream mappingSource, IConstantResolver constantResolver)
+	public DataDrivenConstantMapper(InputStream mappingSource)
 	{
-		super(new HashMap<>(), new HashMap<>(), constantResolver);
+		super(new HashMap<>(), new HashMap<>());
 		try(LineNumberReader reader = new LineNumberReader(new InputStreamReader(mappingSource)))
 		{
 			String line1 = reader.readLine();

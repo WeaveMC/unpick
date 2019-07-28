@@ -2,15 +2,18 @@ package daomephsta.unpick.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.objectweb.asm.Opcodes.IOR;
-import static org.objectweb.asm.Opcodes.LOR;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.RETURN;
 
+import java.util.ListIterator;
+
 import org.junit.jupiter.api.Test;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import daomephsta.unpick.AbstractInsnNodes;
+import daomephsta.unpick.IntegerType;
 import daomephsta.unpick.constantmappers.IConstantMapper;
 import daomephsta.unpick.constantresolvers.ClasspathConstantResolver;
 import daomephsta.unpick.tests.lib.*;
@@ -61,6 +64,57 @@ public class FlagUninliningTest
 		Integer[] testConstants = {0b0000, 0b100000, 0b01000, 0b11000};
 		testUnknownConstants(testConstants, "intConsumer", "(I)V");
 	}
+	
+	@Test
+	public void testNegatedIntFlags()
+	{
+		Integer[] constants = {0b0001, 0b0010, 0b0100, 0b1000};
+		String[] constantNames = {"INT_FLAG_BIT_0", "INT_FLAG_BIT_1", "INT_FLAG_BIT_2", "INT_FLAG_BIT_3"};
+		testNegatedFlags(constants, constantNames, "intConsumer", "(I)V");
+	}
+	
+	@Test
+	public void testNegatedLongFlags()
+	{
+		Long[] constants = {0b0001L, 0b0010L, 0b0100L, 0b1000L};
+		String[] constantNames = {"LONG_FLAG_BIT_0", "LONG_FLAG_BIT_1", "LONG_FLAG_BIT_2", "LONG_FLAG_BIT_3"};
+		testNegatedFlags(constants, constantNames, "longConsumer", "(J)V");
+	}
+	
+	private void testNegatedFlags(Number[] constants, String[] constantNames, String consumerName, String consumerDescriptor)
+	{
+		IConstantMapper mapper = MockConstantMapper.builder()
+				.flagConstantGroup("test")
+					.defineAll(Constants.class, constantNames )
+				.add()
+				.targetMethod(Methods.class, consumerName, consumerDescriptor)
+					.remapParameter(0, "test")
+				.add()
+				.build();
+		
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
+		IntegerType integerType = IntegerType.from(constants.getClass().getComponentType());
+		
+		for (int i = 0; i < constants.length; i++)
+		{
+			Number constant = constants[i];
+			MethodNode mockInvocation = InstructionMocker.mock(mockWriter -> 
+			{
+				mockWriter.visitFieldInsn(Opcodes.GETSTATIC, "Foo", "bar", integerType.getTypeDescriptor());
+				integerType.appendLiteralPushInsn(mockWriter, ~constant.longValue());
+				integerType.appendAndInsn(mockWriter);
+				mockWriter.visitMethodInsn(INVOKESTATIC, Methods.class.getName().replace('.', '/'), consumerName, consumerDescriptor, false);
+			});
+			uninliner.transformMethod(InstructionMocker.CLASS_NAME, mockInvocation);
+			ListIterator<AbstractInsnNode> instructions = mockInvocation.instructions.iterator(0);
+			ASMAssertions.assertReadsField(instructions.next(), "Foo", "bar", integerType.getTypeDescriptor());
+			ASMAssertions.assertReadsField(instructions.next(), Constants.class, constantNames[i], integerType.getTypeDescriptor());
+			ASMAssertions.assertIsLiteral(instructions.next(), integerType.box(-1));
+			ASMAssertions.assertOpcode(instructions.next(), integerType.getXorOpcode());
+			ASMAssertions.assertOpcode(instructions.next(), integerType.getAndOpcode());
+			ASMAssertions.assertInvokesMethod(instructions.next(), Methods.class, consumerName, consumerDescriptor);
+		}
+	}
 
 	@Test
 	public void testLongFlags()
@@ -86,7 +140,7 @@ public class FlagUninliningTest
 
 	private void testConstants(Object[] testConstants, String[][] expectedConstantCombinations, String[] constantNames, String constantConsumerName, String constantConsumerDescriptor)
 	{
-		IConstantMapper mapper = MockConstantMapper.builder(new ClasspathConstantResolver())
+		IConstantMapper mapper = MockConstantMapper.builder()
 				.flagConstantGroup("test")
 					.defineAll(Constants.class, constantNames)
 				.add()
@@ -95,16 +149,8 @@ public class FlagUninliningTest
 				.add()
 				.build();
 		
-		Class<?> unboxedType = TestUtils.unboxedType(testConstants.getClass().getComponentType());
-		String constantTypeDescriptor = Type.getDescriptor(unboxedType);
-		int orOpcode;
-		if (constantTypeDescriptor.equals(Type.LONG_TYPE.getDescriptor()))
-			orOpcode = LOR;
-		else if(constantTypeDescriptor.equals(Type.INT_TYPE.getDescriptor()))
-			orOpcode = IOR;
-		else
-			throw new IllegalArgumentException("Expected long or int test constants but got " + unboxedType.getName() + " test constants");
-		ConstantUninliner uninliner = new ConstantUninliner(mapper);
+		IntegerType integerType = IntegerType.from(testConstants.getClass().getComponentType());
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
 		
 		for (int i = 0; i < testConstants.length; i++)
 		{
@@ -122,19 +168,19 @@ public class FlagUninliningTest
 			ASMAssertions.assertInvokesMethod(mockInvocation.instructions.get(invocationInsnIndex), Methods.class, 
 					constantConsumerName, constantConsumerDescriptor);
 			ASMAssertions.assertReadsField(mockInvocation.instructions.get(0), Constants.class, 
-					expectedConstantCombination[0], constantTypeDescriptor);
+					expectedConstantCombination[0], integerType.getTypeDescriptor());
 			for (int j = 1; j < expectedConstantCombination.length; j += 2)
 			{
 				ASMAssertions.assertReadsField(mockInvocation.instructions.get(j), Constants.class, 
-						expectedConstantCombination[j], constantTypeDescriptor);
-				ASMAssertions.assertOpcode(mockInvocation.instructions.get(j + 1), orOpcode);
+						expectedConstantCombination[j], integerType.getTypeDescriptor());
+				ASMAssertions.assertOpcode(mockInvocation.instructions.get(j + 1), integerType.getOrOpcode());
 			}
 		}
 	}
 	
 	private void testUnknownConstants(Object[] constants, String constantConsumerName, String constantConsumerDescriptor)
 	{
-		IConstantMapper mapper = MockConstantMapper.builder(new ClasspathConstantResolver())
+		IConstantMapper mapper = MockConstantMapper.builder()
 				.flagConstantGroup("test")
 				.add()
 				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
@@ -142,7 +188,7 @@ public class FlagUninliningTest
 				.add()
 				.build();
 
-		ConstantUninliner uninliner = new ConstantUninliner(mapper);
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
 		for (int i = 0; i < constants.length; i++)
 		{
 			Object expectedLiteralValue = constants[i];

@@ -6,34 +6,28 @@ import java.util.function.Supplier;
 
 import org.objectweb.asm.Type;
 
-import daomephsta.unpick.MethodDescriptors;
+import daomephsta.unpick.Utils;
 import daomephsta.unpick.constantmappers.SimpleAbstractConstantMapper;
-import daomephsta.unpick.constantresolvers.IConstantResolver;
 import daomephsta.unpick.representations.*;
 
 public class MockConstantMapper extends SimpleAbstractConstantMapper
 {
-	private MockConstantMapper(Map<String, ReplacementInstructionGenerator> constantGroups, 
-			Map<String, TargetMethod> targetMethods, IConstantResolver constantResolver)
+	private MockConstantMapper(Map<String, ReplacementInstructionGenerator> constantGroups, Map<String, TargetMethod> targetMethods)
 	{
-		super(constantGroups, targetMethods, constantResolver);
+		super(constantGroups, targetMethods);
 	}
 
-	public static Builder builder(IConstantResolver constantResolver)
+	public static Builder builder()
 	{
-		return new Builder(constantResolver);
+		return new Builder();
 	}
 	
 	public static class Builder
 	{
 		private final Map<String, ReplacementInstructionGenerator> constantGroups = new HashMap<>();
 		private final Map<String, TargetMethod> targetMethods = new HashMap<>();
-		private final IConstantResolver constantResolver;
 
-		Builder(IConstantResolver constantResolver)
-		{
-			this.constantResolver = constantResolver;
-		}
+		Builder() {}
 		
 		public TargetMethodBuilder targetMethod(Class<?> owner, String name, String descriptor)
 		{
@@ -52,7 +46,7 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 		
 		public MockConstantMapper build()
 		{
-			return new MockConstantMapper(constantGroups, targetMethods, constantResolver);
+			return new MockConstantMapper(constantGroups, targetMethods);
 		}
 	}
 	
@@ -90,7 +84,7 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 		public Builder add()
 		{
 			TargetMethod method = new TargetMethod(owner, name, Type.getMethodType(descriptor), parameterConstantGroups);
-			if (parent.targetMethods.putIfAbsent(MethodDescriptors.getMethodKey(owner, name, descriptor), method) != null)
+			if (parent.targetMethods.putIfAbsent(Utils.getMethodKey(owner, name, descriptor), method) != null)
 				throw new IllegalStateException(method + " is already targeted");
 			return parent;
 		}

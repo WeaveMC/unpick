@@ -153,7 +153,7 @@ public class SimpleConstantUninliningTest
 
 	private void testKnownConstants(Object[] constants, String[] constantNames, String constantConsumerName, String constantConsumerDescriptor)
 	{
-		IConstantMapper mapper = MockConstantMapper.builder(new ClasspathConstantResolver())
+		IConstantMapper mapper = MockConstantMapper.builder()
 				.simpleConstantGroup("test")
 					.defineAll(Constants.class, constantNames)
 				.add()
@@ -163,7 +163,7 @@ public class SimpleConstantUninliningTest
 				.build();
 
 		String constantTypeDescriptor = Type.getDescriptor(TestUtils.unboxedType(constants.getClass().getComponentType()));
-		ConstantUninliner uninliner = new ConstantUninliner(mapper);
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
 		for (int i = 0; i < constants.length; i++)
 		{
 			Object expectedLiteralValue = constants[i];
@@ -180,7 +180,7 @@ public class SimpleConstantUninliningTest
 	
 	private void testUnknownConstants(Object[] constants, String constantConsumerName, String constantConsumerDescriptor)
 	{
-		IConstantMapper mapper = MockConstantMapper.builder(new ClasspathConstantResolver())
+		IConstantMapper mapper = MockConstantMapper.builder()
 				.simpleConstantGroup("test")
 				.add()
 				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
@@ -188,7 +188,7 @@ public class SimpleConstantUninliningTest
 				.add()
 				.build();
 
-		ConstantUninliner uninliner = new ConstantUninliner(mapper);
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
 		for (int i = 0; i < constants.length; i++)
 		{
 			Object expectedLiteralValue = constants[i];

@@ -4,6 +4,7 @@ import static org.objectweb.asm.ClassWriter.COMPUTE_FRAMES;
 import static org.objectweb.asm.Opcodes.*;
 
 import java.io.PrintWriter;
+import java.util.function.Consumer;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
@@ -29,12 +30,20 @@ public class InstructionMocker
 					expectedType.getClassName(), actualType.getClassName()));
 		}
 		
+		return mock(mockWriter -> 
+		{
+			InstructionFactory.pushesValue(mockWriter, constant);
+			mockWriter.visitMethodInsn(INVOKESTATIC, methodOwner.getName().replace('.', '/'), methodName, methodDescriptor, NOT_INTERFACE);
+		});
+	}
+	
+	public static MethodNode mock(Consumer<MethodVisitor> bodyGenerator)
+	{	
 		ClassWriter mockClassWriter = new ClassWriter(COMPUTE_FRAMES);
 		mockClassWriter.visit(V1_8, ACC_PUBLIC, CLASS_NAME, NO_SIGNATURE, OBJECT_SUPERCLASS, NO_INTERFACES);
 		{
-			MethodVisitor mockWriter = mockClassWriter.visitMethod(ACC_PUBLIC | ACC_STATIC, "invoker", "()V", NO_SIGNATURE, NO_EXCEPTIONS);
-			InstructionFactory.pushesValue(mockWriter, constant);
-			mockWriter.visitMethodInsn(INVOKESTATIC, methodOwner.getName().replace('.', '/'), methodName, methodDescriptor, NOT_INTERFACE);
+			MethodVisitor mockWriter = mockClassWriter.visitMethod(ACC_PUBLIC | ACC_STATIC, "mock", "()V", NO_SIGNATURE, NO_EXCEPTIONS);
+			bodyGenerator.accept(mockWriter);
 			mockWriter.visitInsn(RETURN); // return;
 			mockWriter.visitMaxs(0, 0); //Trigger computation of stack size and local variable count
 			mockWriter.visitEnd();
@@ -45,6 +54,6 @@ public class InstructionMocker
 		CheckClassAdapter.verify(classReader, false, new PrintWriter(System.out));
 		ClassNode mockClass = new ClassNode();
 		classReader.accept(mockClass, 0);
-		return MethodFetcher.fetch(mockClass, "invoker()V");
+		return MethodFetcher.fetch(mockClass, "mock()V");
 	}
 }
