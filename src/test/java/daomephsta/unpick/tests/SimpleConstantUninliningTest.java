@@ -167,12 +167,12 @@ public class SimpleConstantUninliningTest
 		for (int i = 0; i < constants.length; i++)
 		{
 			Object expectedLiteralValue = constants[i];
-			MethodNode mockInvocation = InstructionMocker.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 
-					expectedLiteralValue);
+			MethodNode mockInvocation = TestUtils.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 
+					expectedLiteralValue).getMockMethod();
 			int invocationInsnIndex = 1;
 			checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, expectedLiteralValue, mockInvocation, 
 					invocationInsnIndex);
-			uninliner.transformMethod(InstructionMocker.CLASS_NAME, mockInvocation);
+			uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
 			ASMAssertions.assertReadsField(mockInvocation.instructions.get(invocationInsnIndex - 1), Constants.class, constantNames[i], 
 					constantTypeDescriptor);
 		}
@@ -192,12 +192,12 @@ public class SimpleConstantUninliningTest
 		for (int i = 0; i < constants.length; i++)
 		{
 			Object expectedLiteralValue = constants[i];
-			MethodNode mockInvocation = InstructionMocker.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 
-					expectedLiteralValue);
+			MethodNode mockInvocation = TestUtils.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 
+					expectedLiteralValue).getMockMethod();
 			int invocationInsnIndex = 1;
 			checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, expectedLiteralValue, mockInvocation, 
 					invocationInsnIndex);
-			uninliner.transformMethod(InstructionMocker.CLASS_NAME, mockInvocation);
+			uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
 			//Should be unchanged, so this should still pass
 			checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, expectedLiteralValue, mockInvocation, 
 					invocationInsnIndex);

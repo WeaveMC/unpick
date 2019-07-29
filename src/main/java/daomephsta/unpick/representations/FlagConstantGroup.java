@@ -71,22 +71,13 @@ public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
 
 	private Optional<InsnList> convertANDedLiteral(Number literal)
 	{
-		long lValue = literal.longValue();
-		FlagDefinition match = null;
-		for (FlagDefinition definition : resolvedConstantDefinitions)
-		{
-			if (~definition.getValue().longValue() == lValue)
-				match = definition;
-		}
-		if (match == null)
-			return Optional.empty();
-
 		IntegerType integerType = IntegerType.from(literal.getClass());
-		InsnList replacementInstructions = new InsnList();
-		replacementInstructions.add(new FieldInsnNode(Opcodes.GETSTATIC, match.getOwner(), match.getName(), match.getDescriptorString()));
-		replacementInstructions.add(integerType.createLiteralPushInsn(-1));
-		replacementInstructions.add(integerType.createXorInsn());
-		return Optional.of(replacementInstructions);
+		return convertORedLiteral(integerType.binaryNegate(literal)).map(replacementInstructions ->
+		{
+			replacementInstructions.add(integerType.createLiteralPushInsn(-1));
+			replacementInstructions.add(integerType.createXorInsn());
+			return replacementInstructions;
+		});
 	}
 
 	private Optional<InsnList> convertORedLiteral(Number literal)

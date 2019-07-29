@@ -11,33 +11,37 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 
-public class InstructionMocker
+public class MethodMocker
 {
 	public static final String CLASS_NAME = "Invoker";
 	private static final String[] NO_EXCEPTIONS = null,
 								  NO_INTERFACES = null;
 	private static final String NO_SIGNATURE = null,
 								OBJECT_SUPERCLASS = "java/lang/Object";
-	private static final boolean NOT_INTERFACE = false;
 	
-	public static MethodNode mockInvokeStatic(Class<?> methodOwner, String methodName, String methodDescriptor, Object constant)
+	public static class MockMethod 
 	{
-		Type expectedType = Type.getArgumentTypes(methodDescriptor)[0];
-		Type actualType = Type.getType(TestUtils.unboxedType(constant.getClass()));
-		if (!expectedType.equals(actualType))
-		{
-			throw new IllegalArgumentException(String.format("Expected constant of type %s, actual type %s", 
-					expectedType.getClassName(), actualType.getClassName()));
-		}
+		private final MethodNode mockMethod;
+		private final ClassNode mockClass;
 		
-		return mock(mockWriter -> 
+		public MockMethod(MethodNode mockMethod, ClassNode mockClass)
 		{
-			InstructionFactory.pushesValue(mockWriter, constant);
-			mockWriter.visitMethodInsn(INVOKESTATIC, methodOwner.getName().replace('.', '/'), methodName, methodDescriptor, NOT_INTERFACE);
-		});
+			this.mockMethod = mockMethod;
+			this.mockClass = mockClass;
+		}
+
+		public MethodNode getMockMethod()
+		{
+			return mockMethod;
+		}
+
+		public ClassNode getMockClass()
+		{
+			return mockClass;
+		}
 	}
 	
-	public static MethodNode mock(Consumer<MethodVisitor> bodyGenerator)
+	public static MockMethod mock(Consumer<MethodVisitor> bodyGenerator)
 	{	
 		ClassWriter mockClassWriter = new ClassWriter(COMPUTE_FRAMES);
 		mockClassWriter.visit(V1_8, ACC_PUBLIC, CLASS_NAME, NO_SIGNATURE, OBJECT_SUPERCLASS, NO_INTERFACES);
@@ -54,6 +58,6 @@ public class InstructionMocker
 		CheckClassAdapter.verify(classReader, false, new PrintWriter(System.out));
 		ClassNode mockClass = new ClassNode();
 		classReader.accept(mockClass, 0);
-		return MethodFetcher.fetch(mockClass, "mock()V");
+		return new MockMethod(MethodFetcher.fetch(mockClass, "mock()V"), mockClass);
 	}
 }

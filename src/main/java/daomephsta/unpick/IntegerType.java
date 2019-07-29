@@ -21,6 +21,10 @@ public enum IntegerType
 		@Override
 		public Number box(long value)
 			{ return new Integer((int) value); }
+
+		@Override
+		public Number binaryNegate(Number value)
+			{ return ~value.intValue(); }
 	},
 	LONG(Type.LONG_TYPE, Opcodes.LAND) 
 	{
@@ -35,6 +39,10 @@ public enum IntegerType
 		@Override
 		public Number box(long value)
 			{ return new Long(value); }
+
+		@Override
+		public Number binaryNegate(Number value)
+			{ return ~value.longValue(); }
 	};
 	
 	private final Type type;
@@ -111,4 +119,6 @@ public enum IntegerType
 	}
 
 	public abstract Number box(long value);
+	
+	public abstract Number binaryNegate(Number value);
 }

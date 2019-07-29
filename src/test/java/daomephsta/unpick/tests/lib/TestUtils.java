@@ -1,16 +1,21 @@
 package daomephsta.unpick.tests.lib;
 
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.*;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.tree.analysis.Value;
 
 import daomephsta.unpick.Utils;
+import daomephsta.unpick.tests.lib.MethodMocker.MockMethod;
 
 public class TestUtils
 {	
@@ -46,5 +51,37 @@ public class TestUtils
 	public static String toBase2And10(long l)
 	{
 		return l + " = 0b" + Long.toBinaryString(l);
+	}
+
+	public static MockMethod mockInvokeStatic(Class<?> methodOwner, String methodName, String methodDescriptor, Object constant)
+	{
+		Type expectedType = Type.getArgumentTypes(methodDescriptor)[0];
+		Type actualType = Type.getType(unboxedType(constant.getClass()));
+		if (!expectedType.equals(actualType))
+		{
+			throw new IllegalArgumentException(String.format("Expected constant of type %s, actual type %s", 
+					expectedType.getClassName(), actualType.getClassName()));
+		}
+		
+		return MethodMocker.mock(mockWriter -> 
+		{
+			InstructionFactory.pushesValue(mockWriter, constant);
+			mockWriter.visitMethodInsn(INVOKESTATIC, methodOwner.getName().replace('.', '/'), methodName, methodDescriptor, false);
+		});
+	}
+	
+	public static void dumpClassNode(ClassNode clazz, File dumpPath, String dumpName)
+	{
+		ClassWriter cw = new ClassWriter(0);
+		clazz.accept(cw);
+		dumpPath.mkdirs();
+		try (OutputStream out = new FileOutputStream(new File(dumpPath, dumpName + ".class")))
+		{
+			out.write(cw.toByteArray());
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }
