@@ -8,10 +8,8 @@ import static org.objectweb.asm.Opcodes.RETURN;
 import java.util.ListIterator;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -48,71 +46,71 @@ public class FlagUninliningTest
 		private static void longConsumer(long test) {}
 	}
 	
-	@Test
-	public void testKnownIntFlags()
-	{
-		Integer[] testConstants = {0b1100, 0b0100, 0b1010, 0b0111};
-		String[][] expectedConstantCombinations = 
-			{
-				new String[] {"INT_FLAG_BIT_2", "INT_FLAG_BIT_3"},
-				new String[] {"INT_FLAG_BIT_2"},
-				new String[] {"INT_FLAG_BIT_1", "INT_FLAG_BIT_3"},
-				new String[] {"INT_FLAG_BIT_0", "INT_FLAG_BIT_1", "INT_FLAG_BIT_2"},
-			};
-		String[] constantNames = {"INT_FLAG_BIT_0", "INT_FLAG_BIT_1", "INT_FLAG_BIT_2", "INT_FLAG_BIT_3"};
-		testConstants(testConstants, expectedConstantCombinations, constantNames, "intConsumer", "(I)V");
-	}
-	
-	@Test
-	public void testUnknownIntFlags()
-	{
-		Integer[] testConstants = {0b0000, 0b100000, 0b01000, 0b11000};
-		testUnknownConstants(testConstants, "intConsumer", "(I)V");
-	}
-	
-	@ParameterizedTest(name = "test ~{0}")
+	@ParameterizedTest(name = "testKnownFlag {0}")
 	@MethodSource("intFlagsProvider")
-	public void testNegatedIntFlags(Integer testConstant, String[] expectedConstantCombination, String[] constantNames, String consumerName, String consumerDescriptor)
+	public void testKnownIntFlags(Integer testConstant, String[] expectedConstantCombination, String[] constantNames)
 	{
-		testNegatedFlags(testConstant, expectedConstantCombination, constantNames, consumerName, consumerDescriptor);
+		testKnownFlag(testConstant, expectedConstantCombination, constantNames, "intConsumer", "(I)V");
 	}
 	
-	private static Stream<Arguments> intFlagsProvider()
-	{
-		String[] constantNames = {"INT_FLAG_BIT_0", "INT_FLAG_BIT_1", "INT_FLAG_BIT_2", "INT_FLAG_BIT_3"};
-		String consumer = "intConsumer";
-		String consumerDescriptor = "(I)V";
-		return Stream.of
-		(
-			Arguments.of(0b0100, new String[] {"INT_FLAG_BIT_2"}, constantNames, consumer, consumerDescriptor),
-			Arguments.of(0b1100, new String[] {"INT_FLAG_BIT_2", "INT_FLAG_BIT_3"}, constantNames, consumer, consumerDescriptor),
-			Arguments.of(0b1010, new String[] {"INT_FLAG_BIT_1", "INT_FLAG_BIT_3"}, constantNames, consumer, consumerDescriptor),
-			Arguments.of(0b0111, new String[] {"INT_FLAG_BIT_0", "INT_FLAG_BIT_1", "INT_FLAG_BIT_2"}, constantNames, consumer, consumerDescriptor)
-		);	
-	}
-	
-	@ParameterizedTest(name = "test ~{0}L")
+	@ParameterizedTest(name = "testKnownFlag {0}L")
 	@MethodSource("longFlagsProvider")
-	public void testNegatedLongFlags(Long testConstant, String[] expectedConstantCombination, String[] constantNames, String consumerName, String consumerDescriptor)
+	public void testKnownLongFlags(Long testConstant, String[] expectedConstantCombination, String[] constantNames)
 	{
-		testNegatedFlags(testConstant, expectedConstantCombination, constantNames, consumerName, consumerDescriptor);
+		testKnownFlag(testConstant, expectedConstantCombination, constantNames, "longConsumer", "(J)V");
+	}
+
+	private void testKnownFlag(Object testConstant, String[] expectedConstantCombination, String[] constantNames, String constantConsumerName, String constantConsumerDescriptor)
+	{
+		IConstantMapper mapper = MockConstantMapper.builder()
+				.flagConstantGroup("test")
+					.defineAll(Constants.class, constantNames)
+				.add()
+				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
+					.remapParameter(0, "test")
+				.add()
+				.build();
+		
+		IntegerType integerType = IntegerType.from(testConstant.getClass());
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
+		
+		MockMethod mockMethod = TestUtils.mockInvokeStatic(Methods.class, 
+				constantConsumerName, constantConsumerDescriptor, testConstant);
+		MethodNode mockInvocation = mockMethod.getMockMethod();
+		int invocationInsnIndex = 1;
+		checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, testConstant, mockInvocation, invocationInsnIndex);
+		uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
+		int minimumInsnCount = 2 * (expectedConstantCombination.length - 1) + 1;
+		assertTrue(mockInvocation.instructions.size() >=  minimumInsnCount, 
+				String.format("Expected at least %d instructions, found %d", minimumInsnCount, mockInvocation.instructions.size()));
+		invocationInsnIndex += minimumInsnCount - 1;
+		ASMAssertions.assertInvokesMethod(mockInvocation.instructions.get(invocationInsnIndex), Methods.class, 
+				constantConsumerName, constantConsumerDescriptor);
+		ASMAssertions.assertReadsField(mockInvocation.instructions.get(0), Constants.class, 
+				expectedConstantCombination[0], integerType.getTypeDescriptor());
+		for (int j = 1; j < expectedConstantCombination.length; j += 2)
+		{
+			ASMAssertions.assertReadsField(mockInvocation.instructions.get(j), Constants.class, 
+					expectedConstantCombination[j], integerType.getTypeDescriptor());
+			ASMAssertions.assertOpcode(mockInvocation.instructions.get(j + 1), integerType.getOrOpcode());
+		}
 	}
 	
-	private static Stream<Arguments> longFlagsProvider()
+	@ParameterizedTest(name = "testNegatedFlag ~{0}")
+	@MethodSource("intFlagsProvider")
+	public void testNegatedIntFlags(Integer testConstant, String[] expectedConstantCombination, String[] constantNames)
 	{
-		String[] constantNames = {"LONG_FLAG_BIT_0", "LONG_FLAG_BIT_1", "LONG_FLAG_BIT_2", "LONG_FLAG_BIT_3"};
-		String consumer = "longConsumer";
-		String consumerDescriptor = "(J)V";
-		return Stream.of
-		(
-			Arguments.of(0b0100L, new String[] {"LONG_FLAG_BIT_2"}, constantNames, consumer, consumerDescriptor),
-			Arguments.of(0b1100L, new String[] {"LONG_FLAG_BIT_2", "LONG_FLAG_BIT_3"}, constantNames, consumer, consumerDescriptor),
-			Arguments.of(0b1010L, new String[] {"LONG_FLAG_BIT_1", "LONG_FLAG_BIT_3"}, constantNames, consumer, consumerDescriptor),
-			Arguments.of(0b0111L, new String[] {"LONG_FLAG_BIT_0", "LONG_FLAG_BIT_1", "LONG_FLAG_BIT_2"}, constantNames, consumer, consumerDescriptor)
-		);	
+		testNegatedFlag(testConstant, expectedConstantCombination, constantNames, "intConsumer", "(I)V");
 	}
 	
-	private void testNegatedFlags(Number testConstant, String[] expectedConstantCombination, String[] constantNames, String consumerName, String consumerDescriptor)
+	@ParameterizedTest(name = "testNegatedFlag ~{0}L")
+	@MethodSource("longFlagsProvider")
+	public void testNegatedLongFlags(Long testConstant, String[] expectedConstantCombination, String[] constantNames)
+	{
+		testNegatedFlag(testConstant, expectedConstantCombination, constantNames, "longConsumer", "(J)V");
+	}
+	
+	private void testNegatedFlag(Number testConstant, String[] expectedConstantCombination, String[] constantNames, String consumerName, String consumerDescriptor)
 	{
 		IConstantMapper mapper = MockConstantMapper.builder()
 				.flagConstantGroup("test")
@@ -147,94 +145,66 @@ public class FlagUninliningTest
 			ASMAssertions.assertOpcode(instructions.next(), integerType.getOrOpcode());
 		}
 	}
-
-	@Test
-	public void testLongFlags()
+	
+	@ParameterizedTest(name = "testUnknownFlag {0}")
+	@ValueSource(ints = {0b0000, 0b100000, 0b01000, 0b11000})
+	public void testUnknownIntFlags(Integer testConstant)
 	{
-		Long[] testConstants = {0b1100L, 0b0100L, 0b1010L, 0b0111L};
-		String[][] expectedConstantCombinations = 
-			{
-				new String[] {"LONG_FLAG_BIT_2", "LONG_FLAG_BIT_3"},
-				new String[] {"LONG_FLAG_BIT_2"},
-				new String[] {"LONG_FLAG_BIT_1", "LONG_FLAG_BIT_3"},
-				new String[] {"LONG_FLAG_BIT_0", "LONG_FLAG_BIT_1", "LONG_FLAG_BIT_2"},
-			};
+		testUnknownConstant(testConstant, "intConsumer", "(I)V");
+	}
+	
+	@ParameterizedTest(name = "testUnknownFlag {0}L")
+	@ValueSource(longs = {0b0000L, 0b100000L, 0b01000L, 0b11000L})
+	public void testUnknownLongFlags(Long testConstant)
+	{
+		testUnknownConstant(testConstant, "longConsumer", "(J)V");
+	}
+	
+	private void testUnknownConstant(Number constant, String constantConsumerName, String constantConsumerDescriptor)
+	{
+		IConstantMapper mapper = MockConstantMapper.builder()
+				.flagConstantGroup("test")
+				.add()
+				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
+					.remapParameter(0, "test")
+				.add()
+				.build();
+
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
+
+		MethodNode mockInvocation = TestUtils.mockInvokeStatic(Methods.class, 
+				constantConsumerName, constantConsumerDescriptor, constant).getMockMethod();
+		int invocationInsnIndex = 1;
+		checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, constant, mockInvocation, 
+				invocationInsnIndex);
+		uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
+		//Should be unchanged, so this should still pass
+		checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, constant, mockInvocation, 
+				invocationInsnIndex);
+	}
+	
+	private static Stream<Arguments> intFlagsProvider()
+	{
+		String[] constantNames = {"INT_FLAG_BIT_0", "INT_FLAG_BIT_1", "INT_FLAG_BIT_2", "INT_FLAG_BIT_3"};
+		return Stream.of
+		(
+			Arguments.of(0b0100, new String[] {"INT_FLAG_BIT_2"}, constantNames),
+			Arguments.of(0b1100, new String[] {"INT_FLAG_BIT_2", "INT_FLAG_BIT_3"}, constantNames),
+			Arguments.of(0b1010, new String[] {"INT_FLAG_BIT_1", "INT_FLAG_BIT_3"}, constantNames),
+			Arguments.of(0b0111, new String[] {"INT_FLAG_BIT_0", "INT_FLAG_BIT_1", "INT_FLAG_BIT_2"}, constantNames)
+		);	
+	}
+	
+	private static Stream<Arguments> longFlagsProvider()
+	{
 		String[] constantNames = {"LONG_FLAG_BIT_0", "LONG_FLAG_BIT_1", "LONG_FLAG_BIT_2", "LONG_FLAG_BIT_3"};
-		testConstants(testConstants, expectedConstantCombinations, constantNames, "longConsumer", "(J)V");
-	}
-	
-	@Test
-	public void testUnknownLongFlags()
-	{
-		Long[] testConstants = {0b0000L, 0b100000L, 0b01000L, 0b11000L};
-		testUnknownConstants(testConstants, "longConsumer", "(J)V");
-	}
-
-	private void testConstants(Object[] testConstants, String[][] expectedConstantCombinations, String[] constantNames, String constantConsumerName, String constantConsumerDescriptor)
-	{
-		IConstantMapper mapper = MockConstantMapper.builder()
-				.flagConstantGroup("test")
-					.defineAll(Constants.class, constantNames)
-				.add()
-				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
-					.remapParameter(0, "test")
-				.add()
-				.build();
-		
-		IntegerType integerType = IntegerType.from(testConstants.getClass().getComponentType());
-		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
-		
-		for (int i = 0; i < testConstants.length; i++)
-		{
-			Object expectedLiteralValue = testConstants[i];
-			String[] expectedConstantCombination = expectedConstantCombinations[i];
-			MockMethod mockMethod = TestUtils.mockInvokeStatic(Methods.class, 
-					constantConsumerName, constantConsumerDescriptor, testConstants[i]);
-			MethodNode mockInvocation = mockMethod.getMockMethod();
-			int invocationInsnIndex = 1;
-			checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, expectedLiteralValue, mockInvocation, invocationInsnIndex);
-			uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
-			int minimumInsnCount = 2 * (expectedConstantCombination.length - 1) + 1;
-			assertTrue(mockInvocation.instructions.size() >=  minimumInsnCount, 
-					String.format("Expected at least %d instructions, found %d", minimumInsnCount, mockInvocation.instructions.size()));
-			invocationInsnIndex += minimumInsnCount - 1;
-			ASMAssertions.assertInvokesMethod(mockInvocation.instructions.get(invocationInsnIndex), Methods.class, 
-					constantConsumerName, constantConsumerDescriptor);
-			ASMAssertions.assertReadsField(mockInvocation.instructions.get(0), Constants.class, 
-					expectedConstantCombination[0], integerType.getTypeDescriptor());
-			for (int j = 1; j < expectedConstantCombination.length; j += 2)
-			{
-				ASMAssertions.assertReadsField(mockInvocation.instructions.get(j), Constants.class, 
-						expectedConstantCombination[j], integerType.getTypeDescriptor());
-				ASMAssertions.assertOpcode(mockInvocation.instructions.get(j + 1), integerType.getOrOpcode());
-			}
-		}
-	}
-	
-	private void testUnknownConstants(Object[] constants, String constantConsumerName, String constantConsumerDescriptor)
-	{
-		IConstantMapper mapper = MockConstantMapper.builder()
-				.flagConstantGroup("test")
-				.add()
-				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
-					.remapParameter(0, "test")
-				.add()
-				.build();
-
-		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
-		for (int i = 0; i < constants.length; i++)
-		{
-			Object expectedLiteralValue = constants[i];
-			MethodNode mockInvocation = TestUtils.mockInvokeStatic(Methods.class, 
-					constantConsumerName, constantConsumerDescriptor, expectedLiteralValue).getMockMethod();
-			int invocationInsnIndex = 1;
-			checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, expectedLiteralValue, mockInvocation, 
-					invocationInsnIndex);
-			uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
-			//Should be unchanged, so this should still pass
-			checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, expectedLiteralValue, mockInvocation, 
-					invocationInsnIndex);
-		}
+		return Stream.of
+		(
+			Arguments.of(0b0100L, new String[] {"LONG_FLAG_BIT_2"}, constantNames),
+			Arguments.of(0b1100L, new String[] {"LONG_FLAG_BIT_2", "LONG_FLAG_BIT_3"}, constantNames),
+			Arguments.of(0b1010L, new String[] {"LONG_FLAG_BIT_1", "LONG_FLAG_BIT_3"}, constantNames),
+			Arguments.of(0b0111L, new String[] {"LONG_FLAG_BIT_0", "LONG_FLAG_BIT_1", "LONG_FLAG_BIT_2"}, constantNames)
+		);	
 	}
 
 	private void checkMockInvocationStructure(String constantConsumerName,
