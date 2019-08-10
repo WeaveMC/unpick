@@ -17,8 +17,6 @@ public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
 	 * Constructs a new data driven constant mapper, using the mappings in {@code mappingSource}
 	 * and resolving constants using {@code constantResolver}.
 	 * @param mappingSource an input stream of text in .unpick format
-	 * @param constantResolver an instance of IConstantResolver for resolving constant types and 
-	 * values.
 	 */
 	public DataDrivenConstantMapper(InputStream mappingSource)
 	{

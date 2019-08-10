@@ -23,6 +23,8 @@ public class ConstantUninliner
 	 * Constructs a new instance of ConstantUninliner that maps
 	 * values to constants with {@code mapper}.
 	 * @param mapper an instance of IConstantMapper.
+	 * @param constantResolver an instance of IConstantResolver for resolving constant types and 
+	 * values.
 	 */
 	public ConstantUninliner(IConstantMapper mapper, IConstantResolver constantResolver)
 	{
