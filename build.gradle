@@ -1,10 +1,11 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
-group = 'daomephsta.unpick'
-version = '1.0.0'
 archivesBaseName='unpick'
+group = 'io.github.daomephsta'
+version = '1.0.0'
 
 targetCompatibility = 1.8
 
@@ -14,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.ow2.asm:asm:7.0'
+    api 'org.ow2.asm:asm:7.0'
 	implementation 'org.ow2.asm:asm-commons:7.0'
 	implementation 'org.ow2.asm:asm-tree:7.0'
 	implementation 'org.ow2.asm:asm-util:7.0'
@@ -35,7 +36,16 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-artifacts {
-    archives sourcesJar
-    archives javadocJar
+publishing {
+    publications {
+    	binary(MavenPublication) {
+            from components.java
+    	}
+    	source(MavenPublication) {
+            artifact sourcesJar
+    	}
+    	javadoc(MavenPublication) {
+            artifact javadocJar
+    	}
+	}
 }
