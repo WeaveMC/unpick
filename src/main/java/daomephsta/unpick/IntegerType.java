@@ -4,8 +4,6 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnNode;
 
-import daomephsta.unpick.tests.lib.InstructionFactory;
-
 public enum IntegerType
 {
 	INT(Type.INT_TYPE, Opcodes.IAND) 

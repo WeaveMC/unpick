@@ -14,6 +14,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.tree.analysis.Value;
 
+import daomephsta.unpick.InstructionFactory;
 import daomephsta.unpick.Utils;
 import daomephsta.unpick.tests.lib.MethodMocker.MockMethod;
 

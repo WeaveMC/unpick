@@ -1,4 +1,4 @@
-package daomephsta.unpick.tests.lib;
+package daomephsta.unpick;
 
 import static org.objectweb.asm.Opcodes.*;
 
