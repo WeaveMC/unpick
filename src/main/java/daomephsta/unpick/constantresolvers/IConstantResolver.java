@@ -1,6 +1,6 @@
 package daomephsta.unpick.constantresolvers;
 
-import java.util.Map;
+import java.util.AbstractMap;
 
 import org.objectweb.asm.Type;
 
@@ -10,6 +10,31 @@ import org.objectweb.asm.Type;
  */
 public interface IConstantResolver
 {
+	public static class ResolvedConstant extends AbstractMap.SimpleImmutableEntry<Type, Object>
+	{
+		public ResolvedConstant(Type type, Object value)
+		{
+			super(type, value);
+		}
+
+		public Type getType()
+		{
+			return super.getKey();
+		}
+
+		@Override
+		public Object getValue()
+		{
+			return super.getValue();
+		}
+
+		@Override
+		public String toString()
+		{
+			return String.format("ResolvedConstant [Type Descriptor: %s, Value: %s]", getType(), getValue());
+		}
+	}
+
 	/**
 	 * Resolves the type and value of a constant 
 	 * from its owning class and name.
@@ -17,5 +42,5 @@ public interface IConstantResolver
 	 * @param name the name of the constant.
 	 * @return the type and value of the constant.
 	 */
-	public Map.Entry<Type, Object> resolveConstant(String owner, String name);
+	public ResolvedConstant resolveConstant(String owner, String name);
 }
