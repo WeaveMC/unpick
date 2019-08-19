@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import org.objectweb.asm.Type;
 
 import daomephsta.unpick.representations.*;
+import daomephsta.unpick.representations.TargetMethodIndex.Builder;
 
 public enum V1Parser
 {
@@ -15,7 +16,7 @@ public enum V1Parser
 	
 	private static final Pattern WHITESPACE_SPLITTER = Pattern.compile("\\s");
 	
-	public void parse(LineNumberReader reader, Map<String, ReplacementInstructionGenerator> constantGroups, Map<String, TargetMethod> targetMethods) throws IOException
+	public void parse(LineNumberReader reader, Map<String, ReplacementInstructionGenerator> constantGroups, TargetMethodIndex.Builder targetClassesBuilder) throws IOException
 	{
 		String line = "";
 		while((line = reader.readLine()) != null)
@@ -67,8 +68,7 @@ public enum V1Parser
 			}
 				
 			case "unpick":
-				TargetMethod parsedTargetMethod = parseTargetMethodDefinition(tokens, reader.getLineNumber());
-				targetMethods.put(parsedTargetMethod.getOwner() + '.' + parsedTargetMethod.getName() + parsedTargetMethod.getMethodDescriptor().getDescriptor(), parsedTargetMethod);
+				parseTargetMethodDefinition(targetClassesBuilder, tokens, reader.getLineNumber());
 				break;
 				
 			default:
@@ -139,7 +139,7 @@ public enum V1Parser
 		return new FlagDefinition(owner, name);
 	}
 
-	private TargetMethod parseTargetMethodDefinition(String[] tokens, int lineNumber)
+	private void parseTargetMethodDefinition(Builder targetClassesBuilder, String[] tokens, int lineNumber)
 	{
 		if (tokens.length < 4 || tokens.length % 2 != 0)
 			throw new UnpickSyntaxException(lineNumber, "Unexpected token count. Expected an even number greater than or equal to 4. Found " + tokens.length);
@@ -166,7 +166,7 @@ public enum V1Parser
 					throw new UnpickSyntaxException(lineNumber, "Could not parse " + tokens[p - 1] + " as integer", e);
 				}
 			}
-			return new TargetMethod(owner, name, methodType, parameterConstantGroups);
+			targetClassesBuilder.putMethod(owner, name, methodType, parameterConstantGroups);
 		}
 		catch (IllegalArgumentException e)
 		{

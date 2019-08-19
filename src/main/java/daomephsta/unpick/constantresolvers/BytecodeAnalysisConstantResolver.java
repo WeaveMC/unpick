@@ -7,8 +7,9 @@ import java.util.*;
 import org.objectweb.asm.*;
 
 import daomephsta.unpick.Types;
+import daomephsta.unpick.constantmappers.IClassResolver;
 
-public abstract class ASMVisitingConstantResolver implements IConstantResolver
+public class BytecodeAnalysisConstantResolver implements IConstantResolver
 {
 	private static final Set<Type> VALID_CONSTANT_TYPES = new HashSet<>();
 	static 
@@ -18,7 +19,13 @@ public abstract class ASMVisitingConstantResolver implements IConstantResolver
 	}
 	
 	private final Map<String, ResolvedConstants> constantDataCache = new HashMap<>();
+	private final IClassResolver classResolver;
 	
+	public BytecodeAnalysisConstantResolver(IClassResolver classResolver)
+	{
+		this.classResolver = classResolver;
+	}
+
 	@Override
 	public ResolvedConstant resolveConstant(String owner, String name)
 	{
@@ -29,7 +36,9 @@ public abstract class ASMVisitingConstantResolver implements IConstantResolver
 	{
 		try
 		{
-			ClassReader cr = createClassReader(owner);
+			ClassReader cr = classResolver.resolveClass(owner);
+			if (cr == null)
+				throw new NullPointerException("ClassReader cannot be null");
 			ResolvedConstants resolvedConstants = new ResolvedConstants(Opcodes.ASM7);
 			cr.accept(resolvedConstants, 0);
 			return resolvedConstants;
@@ -39,8 +48,6 @@ public abstract class ASMVisitingConstantResolver implements IConstantResolver
 			throw new RuntimeException(e);
 		}
 	}
-
-	protected abstract ClassReader createClassReader(String owner) throws IOException;
 	
 	private static class ResolvedConstants extends ClassVisitor
 	{

@@ -3,9 +3,11 @@ package daomephsta.unpick.constantmappers.datadriven;
 import java.io.*;
 import java.util.HashMap;
 
+import daomephsta.unpick.constantmappers.IClassResolver;
 import daomephsta.unpick.constantmappers.SimpleAbstractConstantMapper;
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
 import daomephsta.unpick.constantmappers.datadriven.parser.V1Parser;
+import daomephsta.unpick.representations.TargetMethodIndex;
 
 /**
  * Maps inlined values to constants, using a mapping defined in a file
@@ -13,25 +15,38 @@ import daomephsta.unpick.constantmappers.datadriven.parser.V1Parser;
  */
 public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
 {	
+	private final TargetMethodIndex targetMethodIndex;
 	/**
 	 * Constructs a new data driven constant mapper, using the mappings in {@code mappingSource}
 	 * and resolving constants using {@code constantResolver}.
-	 * @param mappingSource an input stream of text in .unpick format
+	 * @param mappingSources InputStreams of text in .unpick format
+	 * @param classResolver 
 	 */
-	public DataDrivenConstantMapper(InputStream mappingSource)
+	public DataDrivenConstantMapper(IClassResolver classResolver, InputStream... mappingSources)
 	{
-		super(new HashMap<>(), new HashMap<>());
-		try(LineNumberReader reader = new LineNumberReader(new InputStreamReader(mappingSource)))
+		super(new HashMap<>());
+		TargetMethodIndex.Builder targetMethodIndexBuilder = new TargetMethodIndex.Builder(classResolver);
+		for (InputStream mappingSource : mappingSources)
 		{
-			String line1 = reader.readLine();
-			if ("v1".equals(line1))
-				V1Parser.INSTANCE.parse(reader, constantGroups, targetMethods);
-			else
-				throw new UnpickSyntaxException("Unknown version " + line1);
+			try(LineNumberReader reader = new LineNumberReader(new InputStreamReader(mappingSource)))
+			{
+				String line1 = reader.readLine();
+				if ("v1".equals(line1))
+					V1Parser.INSTANCE.parse(reader, constantGroups, targetMethodIndexBuilder);
+				else
+					throw new UnpickSyntaxException("Unknown version " + line1);
+			}
+			catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
 		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
+		this.targetMethodIndex = targetMethodIndexBuilder.build();
+	}
+
+	@Override
+	protected TargetMethodIndex getTargetMethodIndex()
+	{
+		return targetMethodIndex;
 	}
 }

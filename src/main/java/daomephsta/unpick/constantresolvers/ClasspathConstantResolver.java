@@ -1,18 +1,15 @@
 package daomephsta.unpick.constantresolvers;
 
-import java.io.IOException;
-
 import org.objectweb.asm.ClassReader;
 
 /**
  * Resolves constants by looking for them on the classpath.
  * @author Daomephsta
  */
-public class ClasspathConstantResolver extends ASMVisitingConstantResolver
+public class ClasspathConstantResolver extends BytecodeAnalysisConstantResolver
 {
-	@Override
-	protected ClassReader createClassReader(String owner) throws IOException
+	public ClasspathConstantResolver()
 	{
-		return new ClassReader(owner);
+		super(ClassReader::new);
 	}
 }
