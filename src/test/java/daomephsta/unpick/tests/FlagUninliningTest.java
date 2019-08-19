@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -62,7 +63,7 @@ public class FlagUninliningTest
 
 	private void testKnownFlag(Object testConstant, String[] expectedConstantCombination, String[] constantNames, String constantConsumerName, String constantConsumerDescriptor)
 	{
-		IConstantMapper mapper = MockConstantMapper.builder()
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.flagConstantGroup("test")
 					.defineAll(Constants.class, constantNames)
 				.add()
@@ -112,7 +113,7 @@ public class FlagUninliningTest
 	
 	private void testNegatedFlag(Number testConstant, String[] expectedConstantCombination, String[] constantNames, String consumerName, String consumerDescriptor)
 	{
-		IConstantMapper mapper = MockConstantMapper.builder()
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.flagConstantGroup("test")
 				.defineAll(Constants.class, constantNames)
 				.add()
@@ -162,7 +163,7 @@ public class FlagUninliningTest
 	
 	private void testUnknownConstant(Number constant, String constantConsumerName, String constantConsumerDescriptor)
 	{
-		IConstantMapper mapper = MockConstantMapper.builder()
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.flagConstantGroup("test")
 				.add()
 				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)

@@ -6,29 +6,41 @@ import java.util.function.Supplier;
 
 import org.objectweb.asm.Type;
 
-import daomephsta.unpick.Utils;
+import daomephsta.unpick.constantmappers.IClassResolver;
 import daomephsta.unpick.constantmappers.SimpleAbstractConstantMapper;
 import daomephsta.unpick.representations.*;
 
 public class MockConstantMapper extends SimpleAbstractConstantMapper
 {
-	private MockConstantMapper(Map<String, ReplacementInstructionGenerator> constantGroups, Map<String, TargetMethod> targetMethods)
+	private final TargetMethodIndex targetMethodIndex;
+
+	private MockConstantMapper(Map<String, ReplacementInstructionGenerator> constantGroups, TargetMethodIndex methodIndex)
 	{
-		super(constantGroups, targetMethods);
+		super(constantGroups);
+		this.targetMethodIndex = methodIndex;
 	}
 
-	public static Builder builder()
+	public static Builder builder(IClassResolver classResolver)
 	{
-		return new Builder();
+		return new Builder(classResolver);
+	}
+
+	@Override
+	protected TargetMethodIndex getTargetMethodIndex()
+	{
+		return targetMethodIndex;
 	}
 	
 	public static class Builder
 	{
 		private final Map<String, ReplacementInstructionGenerator> constantGroups = new HashMap<>();
-		private final Map<String, TargetMethod> targetMethods = new HashMap<>();
-
-		Builder() {}
+		private final TargetMethodIndex.Builder methodIndexBuilder;
 		
+		public Builder(IClassResolver classResolver)
+		{
+			methodIndexBuilder = new TargetMethodIndex.Builder(classResolver);
+		}
+
 		public TargetMethodBuilder targetMethod(Class<?> owner, String name, String descriptor)
 		{
 			return new TargetMethodBuilder(this, owner.getName().replace('.', '/'), name, descriptor);
@@ -46,7 +58,7 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 		
 		public MockConstantMapper build()
 		{
-			return new MockConstantMapper(constantGroups, targetMethods);
+			return new MockConstantMapper(constantGroups, methodIndexBuilder.build());
 		}
 	}
 	
@@ -83,9 +95,7 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 		
 		public Builder add()
 		{
-			TargetMethod method = new TargetMethod(owner, name, Type.getMethodType(descriptor), parameterConstantGroups);
-			if (parent.targetMethods.putIfAbsent(Utils.getMethodKey(owner, name, descriptor), method) != null)
-				throw new IllegalStateException(method + " is already targeted");
+			parent.methodIndexBuilder.putMethod(owner, name, Type.getMethodType(descriptor), parameterConstantGroups);
 			return parent;
 		}
 	}

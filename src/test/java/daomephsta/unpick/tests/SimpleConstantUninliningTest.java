@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -187,7 +188,7 @@ public class SimpleConstantUninliningTest
 
 	private void testKnownConstant(Object constant, String expectedConstant, String constantConsumerName, String constantConsumerDescriptor)
 	{
-		IConstantMapper mapper = MockConstantMapper.builder()
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.simpleConstantGroup("test")
 					.define(Constants.class, expectedConstant)
 				.add()
@@ -210,7 +211,7 @@ public class SimpleConstantUninliningTest
 	
 	private void testUnknownConstant(Object constant, String constantConsumerName, String constantConsumerDescriptor)
 	{
-		IConstantMapper mapper = MockConstantMapper.builder()
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.simpleConstantGroup("test")
 				.add()
 				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
