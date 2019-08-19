@@ -21,17 +21,17 @@ public class FlagStatement
 		this.root = root;
 	}
 
-	public static FlagStatement create(AbstractInsnNode rootInsn, Function<AbstractInsnNode, Frame<SourceValue>> insnToFrame)
+	public static Optional<FlagStatement> create(AbstractInsnNode rootInsn, Function<AbstractInsnNode, Frame<SourceValue>> insnToFrame)
 	{
 		boolean isBitwiseOp = rootInsn.getOpcode() >= Opcodes.IAND || rootInsn.getOpcode() <= Opcodes.LXOR;
 		boolean isLiteral = rootInsn.getOpcode() >= Opcodes.ICONST_M1 && rootInsn.getOpcode() <= Opcodes.LDC;
 		if (!isBitwiseOp && !isLiteral)
 			throw new IllegalArgumentException("Root node must be a literal or bitwise operator");
 		
-		return new FlagStatement(toNode(rootInsn, insnToFrame));
+		return toNode(rootInsn, insnToFrame).map(FlagStatement::new);
 	}
 	
-	private static Node toNode(AbstractInsnNode insn, Function<AbstractInsnNode, Frame<SourceValue>> insnToFrame)
+	private static Optional<Node> toNode(AbstractInsnNode insn, Function<AbstractInsnNode, Frame<SourceValue>> insnToFrame)
 	{
 		if (insn.getOpcode() >= Opcodes.IAND && insn.getOpcode() <= Opcodes.LXOR)
 		{
@@ -42,20 +42,24 @@ public class FlagStatement
 			{
 				Set<AbstractInsnNode> insns = frame.getStack(s).insns;
 				if (insns.size() != 1)
-					throw new IllegalStateException("Cannot process");
-				args.add(toNode(insns.iterator().next(), insnToFrame));
+					return Optional.empty();
+				Optional<Node> node = toNode(insns.iterator().next(), insnToFrame);
+				if (node.isPresent())
+					args.add(node.get());
+				else
+					return Optional.empty();
 			}
-			return new Operation(insn, operation, args);
+			return Optional.of(new Operation(insn, operation, args));
 		}
 		else if (insn.getOpcode() >= Opcodes.ICONST_M1 && insn.getOpcode() <= Opcodes.LDC)
 		{
 			Object value = AbstractInsnNodes.getLiteralValue(insn);
 			if (value instanceof Integer || value instanceof Long)
-				return new Literal(insn, (Number) value);
+				return Optional.of(new Literal(insn, (Number) value));
 			else
-				throw new IllegalArgumentException(Utils.visitableToString(insn::accept) + " is not an integer literal");
+				throw new IllegalArgumentException(Utils.visitableToString(insn::accept).trim() + " is not an integer literal");
 		}
-		return new Other(insn);
+		return Optional.of(new Other(insn));
 	}
 
 	private static BitOp getOp(AbstractInsnNode insn)
@@ -67,7 +71,7 @@ public class FlagStatement
 		else if (insn.getOpcode() == Opcodes.IXOR || insn.getOpcode() == Opcodes.LXOR)
 			return BitOp.XOR;
 		else
-			throw new IllegalArgumentException(Utils.visitableToString(insn::accept) + " is not a bitwise operator");
+			throw new IllegalArgumentException(Utils.visitableToString(insn::accept).trim() + " is not a bitwise operator");
 	} 
 	
 	public void collectReplacements(ReplacementSet replacementSet, BiFunction<Number, BitOp, Optional<InsnList>> literalConverter)

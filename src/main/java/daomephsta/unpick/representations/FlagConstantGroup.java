@@ -47,7 +47,7 @@ public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
 	{
 		resolveAllConstants(context.getConstantResolver());
 		FlagStatement.create(context.getArgSeed(), context::getFrameForInstruction)
-			.collectReplacements(context.getReplacementSet(), this::convertLiteral);
+			.ifPresent(fs -> fs.collectReplacements(context.getReplacementSet(), this::convertLiteral));
 	}
 	
 	private Optional<InsnList> convertLiteral(Number literal, BitOp bitOp)
