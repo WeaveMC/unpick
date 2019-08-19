@@ -1,5 +1,7 @@
 package daomephsta.unpick.representations;
 
+import java.util.logging.Logger;
+
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.analysis.Frame;
@@ -27,15 +29,17 @@ public interface ReplacementInstructionGenerator
 		private final AbstractInsnNode argSeed;
 		private final InsnList instructions;
 		private final Frame<SourceValue>[] frames;
+		private final Logger logger;
 
 		public Context(IConstantResolver constantResolver, ReplacementSet replacementSet, AbstractInsnNode argSeed, 
-				InsnList instructions, Frame<SourceValue>[] frames)
+				InsnList instructions, Frame<SourceValue>[] frames, Logger logger)
 		{
 			this.constantResolver = constantResolver;
 			this.replacementSet = replacementSet;
 			this.argSeed = argSeed;
 			this.instructions = instructions;
 			this.frames = frames;
+			this.logger = logger;
 		}
 
 		public IConstantResolver getConstantResolver()
@@ -56,6 +60,11 @@ public interface ReplacementInstructionGenerator
 		public Frame<SourceValue> getFrameForInstruction(AbstractInsnNode insn)
 		{
 			return frames[instructions.indexOf(insn)];
+		}
+		
+		public Logger getLogger()
+		{
+			return logger;
 		}
 	}
 }

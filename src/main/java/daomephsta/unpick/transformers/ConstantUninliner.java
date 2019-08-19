@@ -1,9 +1,13 @@
 package daomephsta.unpick.transformers;
 
+import java.io.IOException;
+import java.util.logging.*;
+
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.*;
 
+import daomephsta.unpick.Utils;
 import daomephsta.unpick.constantmappers.IConstantMapper;
 import daomephsta.unpick.constantresolvers.IConstantResolver;
 import daomephsta.unpick.representations.ReplacementInstructionGenerator.Context;
@@ -15,6 +19,7 @@ import daomephsta.unpick.representations.ReplacementSet;
  */
 public class ConstantUninliner
 {
+	private final Logger logger;
 	private final IConstantMapper mapper;
 	private final IConstantResolver constantResolver;
 	private final Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
@@ -30,6 +35,39 @@ public class ConstantUninliner
 	{
 		this.mapper = mapper;
 		this.constantResolver = constantResolver;
+		this.logger = Logger.getLogger("unpick");
+		logger.setUseParentHandlers(false);
+	}
+	
+	/**
+	 * Constructs a new instance of ConstantUninliner that maps
+	 * values to constants with {@code mapper}.
+	 * @param mapper an instance of IConstantMapper.
+	 * @param constantResolver an instance of IConstantResolver for resolving constant types and 
+	 * values.
+	 * @param logFile YEET
+	 */
+	public ConstantUninliner(IConstantMapper mapper, IConstantResolver constantResolver, String logFile)
+	{
+		this(mapper, constantResolver);
+		try
+		{
+			FileHandler fileHandler = new FileHandler(logFile);
+			Formatter formatter = new Formatter()
+			{
+				@Override
+				public String format(LogRecord record)
+				{
+					return record.getLevel() + ": " + String.format(record.getMessage(), record.getParameters()) + System.lineSeparator();
+				}
+			};
+			fileHandler.setFormatter(formatter);
+			logger.addHandler(fileHandler);
+		} 
+		catch (SecurityException | IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -52,6 +90,7 @@ public class ConstantUninliner
 	 */
 	public void transformMethod(String methodOwner, MethodNode method)
 	{
+		logger.log(Level.INFO, String.format("Processing %s.%s%s", methodOwner, method.name, method.desc));
 		try
 		{ 
 			ReplacementSet replacementSet = new ReplacementSet(method.instructions);
@@ -60,7 +99,9 @@ public class ConstantUninliner
 			{
 				AbstractInsnNode insn = method.instructions.get(i);
 				if (insn instanceof MethodInsnNode)
+				{
 					processMethodInvocation(method, (MethodInsnNode) insn, replacementSet, frames, i);
+				}
 			}
 			replacementSet.apply();
 		}
@@ -84,7 +125,9 @@ public class ConstantUninliner
 				continue;
 			for (AbstractInsnNode sourceInsn : frame.getStack(frame.getStackSize() - parameterTypes.length + parameterIndex).insns)
 			{
-				Context context = new Context(constantResolver, replacementSet, sourceInsn, enclosingMethod.instructions, frames);
+				Context context = new Context(constantResolver, replacementSet, sourceInsn, enclosingMethod.instructions, frames, logger);
+				logger.log(Level.INFO, String.format("Target: %s.%s#param-%d Arg Seed: %s", 
+						methodInvocation.owner, methodInvocation.name, parameterIndex, Utils.visitableToString(sourceInsn::accept)).trim());
 				mapper.map(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, context);
 			}
 		}
