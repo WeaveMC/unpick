@@ -12,12 +12,12 @@ import daomephsta.unpick.representations.*;
 
 public class MockConstantMapper extends SimpleAbstractConstantMapper
 {
-	private final TargetMethodIndex targetMethodIndex;
+	private final TargetMethods targetInvocations;
 
-	private MockConstantMapper(Map<String, ReplacementInstructionGenerator> constantGroups, TargetMethodIndex methodIndex)
+	private MockConstantMapper(Map<String, ReplacementInstructionGenerator> constantGroups, TargetMethods targetInvocations)
 	{
 		super(constantGroups);
-		this.targetMethodIndex = methodIndex;
+		this.targetInvocations = targetInvocations;
 	}
 
 	public static Builder builder(IClassResolver classResolver)
@@ -26,19 +26,19 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 	}
 
 	@Override
-	protected TargetMethodIndex getTargetMethodIndex()
+	protected TargetMethods getTargetMethods()
 	{
-		return targetMethodIndex;
+		return targetInvocations;
 	}
 	
 	public static class Builder
 	{
 		private final Map<String, ReplacementInstructionGenerator> constantGroups = new HashMap<>();
-		private final TargetMethodIndex.Builder methodIndexBuilder;
+		private final TargetMethods.Builder targetMethodsBuilder;
 		
 		public Builder(IClassResolver classResolver)
 		{
-			methodIndexBuilder = new TargetMethodIndex.Builder(classResolver);
+			targetMethodsBuilder = TargetMethods.builder(classResolver);
 		}
 
 		public TargetMethodBuilder targetMethod(Class<?> owner, String name, String descriptor)
@@ -58,7 +58,7 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 		
 		public MockConstantMapper build()
 		{
-			return new MockConstantMapper(constantGroups, methodIndexBuilder.build());
+			return new MockConstantMapper(constantGroups, targetMethodsBuilder.build());
 		}
 	}
 	
@@ -73,29 +73,24 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 	}
 	
 	public static class TargetMethodBuilder extends ChildBuilder
-	{
-		private final String owner, name, descriptor;
-		private final Map<Integer, String> parameterConstantGroups;
-		
+	{	
+		private final TargetMethods.TargetMethodBuilder targetMethodBuilder;
+
 		TargetMethodBuilder(Builder parent, String owner, String name, String descriptor)
 		{
 			super(parent);
-			this.owner = owner;
-			this.name = name;
-			this.descriptor = descriptor;
-			this.parameterConstantGroups = new HashMap<>(Type.getArgumentTypes(descriptor).length);
+			this.targetMethodBuilder = parent.targetMethodsBuilder.targetMethod(owner, name, Type.getType(descriptor));
 		}
 		
 		public TargetMethodBuilder remapParameter(int parameterIndex, String constantGroup)
 		{
-			if (parameterConstantGroups.putIfAbsent(parameterIndex, constantGroup) != null)
-				throw new IllegalStateException("Parameter " + parameterIndex + " is already mapped to a constant group");
+			targetMethodBuilder.parameterGroup(parameterIndex, constantGroup);
 			return this;
 		}
 		
 		public Builder add()
 		{
-			parent.methodIndexBuilder.putMethod(owner, name, Type.getMethodType(descriptor), parameterConstantGroups);
+			targetMethodBuilder.add();
 			return parent;
 		}
 	}

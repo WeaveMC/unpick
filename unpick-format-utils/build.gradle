@@ -3,25 +3,15 @@ plugins {
     id 'maven-publish'
 }
 
-archivesBaseName='unpick'
+archivesBaseName = 'unpick-format-utils'
 group = 'io.github.daomephsta'
 version = '2.0.0'
 
-targetCompatibility = 1.8
-
 repositories {
     jcenter()
-    mavenCentral()
 }
 
 dependencies {
-    api 'org.ow2.asm:asm:7.0'
-	implementation 'org.ow2.asm:asm-commons:7.0'
-	implementation 'org.ow2.asm:asm-tree:7.0'
-	implementation 'org.ow2.asm:asm-util:7.0'
-	implementation project(':unpick-format-utils')
-
-    // Use JUnit test framework
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.+'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.+'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.+'

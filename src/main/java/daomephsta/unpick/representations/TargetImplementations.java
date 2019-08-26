@@ -7,12 +7,12 @@ import org.objectweb.asm.*;
 
 import daomephsta.unpick.constantmappers.IClassResolver;
 
-public class TargetMethodIndex
+public class TargetImplementations
 {
-	private final Map<String, TargetMethod> methods;
+	private final Map<String, TargetInvocation> methods;
 	private final IClassResolver classResolver;
 
-	private TargetMethodIndex(IClassResolver classResolver, Map<String, TargetMethod> methods)
+	private TargetImplementations(IClassResolver classResolver, Map<String, TargetInvocation> methods)
 	{
 		this.classResolver = classResolver;
 		this.methods = methods;
@@ -20,7 +20,7 @@ public class TargetMethodIndex
 
 	public boolean targets(String methodOwner, String methodName, String methodDescriptor)
 	{
-		TargetMethod targetMethod = methods.get(methodName + methodDescriptor);
+		TargetInvocation targetMethod = methods.get(methodName + methodDescriptor);
 		if (targetMethod == null)
 			return false;
 		return targetMethod.implementedBy(classResolver, methodOwner);	
@@ -28,34 +28,34 @@ public class TargetMethodIndex
 
 	public boolean targets(String methodOwner, String methodName, String methodDescriptor, int parameterIndex)
 	{
-		TargetMethod targetMethod = methods.get(methodName + methodDescriptor);
+		TargetInvocation targetMethod = methods.get(methodName + methodDescriptor);
 		return targetMethod.hasParameterConstantGroup(parameterIndex);
 	}
 
 	public String getParameterConstantGroup(String methodOwner, String methodName, String methodDescriptor, int parameterIndex)
 	{
-		TargetMethod targetMethod = methods.get(methodName + methodDescriptor);
+		TargetInvocation targetMethod = methods.get(methodName + methodDescriptor);
 		return targetMethod.getParameterConstantGroup(parameterIndex);
 	}
 	
 	public static class Builder
 	{
 		private final IClassResolver classResolver;
-		private final Map<String, TargetMethod> targetMethods = new HashMap<>();
+		private final Map<String, TargetInvocation> targetMethods = new HashMap<>();
 
 		public Builder(IClassResolver classResolver)
 		{
 			this.classResolver = classResolver;
 		}
 
-		public void putMethod(String owner, String name, Type descriptor, Map<Integer, String> parameterConstantGroups)
+		public void putInvocation(String owner, String name, Type descriptor, Map<Integer, String> parameterConstantGroups)
 		{
-			targetMethods.put(name + descriptor, new TargetMethod(owner, name, descriptor, parameterConstantGroups));
+			targetMethods.put(name + descriptor, new TargetInvocation(owner, name, descriptor, parameterConstantGroups));
 		}
 
-		public TargetMethodIndex build()
+		public TargetImplementations build()
 		{
-			return new TargetMethodIndex(classResolver, targetMethods);
+			return new TargetImplementations(classResolver, targetMethods);
 		}
 	}
 	
@@ -63,7 +63,7 @@ public class TargetMethodIndex
 	 * Represents a method with parameters that may be inlined constants
 	 * @author Daomephsta
 	 */
-	public static class TargetMethod
+	public static class TargetInvocation
 	{
 		private final String declarator,
 							 name;
@@ -80,7 +80,7 @@ public class TargetMethodIndex
 		 * @param parameterConstantGroups a Map that maps a parameter index to the name
 		 * of the constant group that contains all valid constants for that parameter. 
 		 */
-		public TargetMethod(String owner, String name, Type descriptor, Map<Integer, String> parameterConstantGroups)
+		public TargetInvocation(String owner, String name, Type descriptor, Map<Integer, String> parameterConstantGroups)
 		{
 			this.declarator = owner;
 			this.name = name;

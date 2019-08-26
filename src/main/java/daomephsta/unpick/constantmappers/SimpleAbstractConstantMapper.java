@@ -16,24 +16,24 @@ public abstract class SimpleAbstractConstantMapper implements IConstantMapper
 		this.constantGroups = constantGroups;
 	}
 	
-	protected abstract TargetMethodIndex getTargetMethodIndex();
+	protected abstract TargetMethods getTargetMethods();
 
 	@Override
 	public boolean targets(String methodOwner, String methodName, String methodDescriptor)
 	{
-		return getTargetMethodIndex().targets(methodOwner, methodName, methodDescriptor);
+		return getTargetMethods().targets(methodOwner, methodName, methodDescriptor);
 	}
 	
 	@Override
 	public boolean targets(String methodOwner, String methodName, String methodDescriptor, int parameterIndex)
 	{
-		return getTargetMethodIndex().targets(methodOwner, methodName, methodDescriptor, parameterIndex);
+		return getTargetMethods().targets(methodOwner, methodName, methodDescriptor, parameterIndex);
 	}
 	
 	@Override
 	public void map(String methodOwner, String methodName, String methodDescriptor, int parameterIndex, Context context)
 	{	
-		String constantGroupID = getTargetMethodIndex().getParameterConstantGroup(methodOwner, methodName, methodDescriptor, parameterIndex);
+		String constantGroupID = getTargetMethods().getParameterConstantGroup(methodOwner, methodName, methodDescriptor, parameterIndex);
 		ReplacementInstructionGenerator constantGroup = constantGroups.get(constantGroupID);
 		if (constantGroup == null)
 		{

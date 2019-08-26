@@ -116,7 +116,7 @@ public class ConstantUninliner
 	{
 		if (!mapper.targets(methodInvocation.owner, methodInvocation.name, methodInvocation.desc))
 			return;
-		
+		logger.log(Level.INFO, String.format("Target: %s.%s", methodInvocation.owner, methodInvocation.name));
 		Frame<SourceValue> frame = frames[instructionIndex];
 		Type[] parameterTypes = Type.getArgumentTypes(methodInvocation.desc);
 		for (int parameterIndex = 0; parameterIndex < parameterTypes.length; parameterIndex++)

@@ -1,13 +1,15 @@
 package daomephsta.unpick.constantmappers.datadriven;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 
 import daomephsta.unpick.constantmappers.IClassResolver;
 import daomephsta.unpick.constantmappers.SimpleAbstractConstantMapper;
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
 import daomephsta.unpick.constantmappers.datadriven.parser.V1Parser;
-import daomephsta.unpick.representations.TargetMethodIndex;
+import daomephsta.unpick.constantmappers.datadriven.parser.v2.V2Parser;
+import daomephsta.unpick.representations.TargetMethods;
 
 /**
  * Maps inlined values to constants, using a mapping defined in a file
@@ -15,38 +17,54 @@ import daomephsta.unpick.representations.TargetMethodIndex;
  */
 public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
 {	
-	private final TargetMethodIndex targetMethodIndex;
+	private final TargetMethods targetMethods;
 	/**
 	 * Constructs a new data driven constant mapper, using the mappings in {@code mappingSource}
 	 * and resolving constants using {@code constantResolver}.
 	 * @param mappingSources InputStreams of text in .unpick format
-	 * @param classResolver 
+	 * @param classResolver a class resolver that can resolve the classes of the target methods
 	 */
 	public DataDrivenConstantMapper(IClassResolver classResolver, InputStream... mappingSources)
 	{
 		super(new HashMap<>());
-		TargetMethodIndex.Builder targetMethodIndexBuilder = new TargetMethodIndex.Builder(classResolver);
+		TargetMethods.Builder targetMethodsBuilder = TargetMethods.builder(classResolver);
 		for (InputStream mappingSource : mappingSources)
 		{
-			try(LineNumberReader reader = new LineNumberReader(new InputStreamReader(mappingSource)))
+			try
 			{
-				String line1 = reader.readLine();
-				if ("v1".equals(line1))
-					V1Parser.INSTANCE.parse(reader, constantGroups, targetMethodIndexBuilder);
+				byte[] version = new byte [2];
+				mappingSource.read(version);
+				if (version[0] == 'v')
+				{
+					switch (version[1])
+					{
+					case '1':
+						V1Parser.INSTANCE.parse(mappingSource, constantGroups, targetMethodsBuilder);
+						break;
+						
+					case '2':
+						V2Parser.parse(mappingSource, constantGroups, targetMethodsBuilder);
+						break;
+
+					default :
+						throw new UnpickSyntaxException(1, "Unknown version " + (char) version[1]);
+					}
+				}
 				else
-					throw new UnpickSyntaxException("Unknown version " + line1);
-			}
+					throw new UnpickSyntaxException(1, "Missing version");
+			} 
 			catch (IOException e)
 			{
-				throw new RuntimeException(e);
+				e.printStackTrace();
 			}
 		}
-		this.targetMethodIndex = targetMethodIndexBuilder.build();
+		this.targetMethods = targetMethodsBuilder.build();
+		System.out.println(targetMethods);
 	}
 
 	@Override
-	protected TargetMethodIndex getTargetMethodIndex()
+	protected TargetMethods getTargetMethods()
 	{
-		return targetMethodIndex;
+		return targetMethods;
 	}
 }

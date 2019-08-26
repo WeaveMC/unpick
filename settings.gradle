@@ -1,1 +1,3 @@
+include 'unpick-format-utils'
+
 rootProject.name = 'unpick'
