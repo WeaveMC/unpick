@@ -9,11 +9,6 @@ import org.objectweb.asm.util.*;
 
 public class Utils
 {
-	public static String getMethodKey(String methodOwner, String methodName, String methodDescriptor)
-	{
-		return methodOwner + '.' + methodName + methodDescriptor;
-	}
-
 	public static String visitableToString(Consumer<MethodVisitor> visitable)
 	{
 		StringWriter w = new StringWriter();

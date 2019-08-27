@@ -1,11 +1,7 @@
 package daomephsta.unpick.transformers;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.logging.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;

@@ -2,7 +2,7 @@ package daomephsta.unpick.representations;
 
 import org.objectweb.asm.Type;
 
-import daomephsta.unpick.Types;
+import daomephsta.unpick.LiteralType;
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
 import daomephsta.unpick.constantresolvers.IConstantResolver;
 
@@ -53,19 +53,7 @@ public abstract class AbstractConstantDefinition<C extends AbstractConstantDefin
 	{
 		try 
 		{ 
-			if (descriptor == Type.INT_TYPE)
-				return Integer.parseInt(valueString);
-			else if (descriptor == Type.LONG_TYPE)
-				return Long.parseLong(valueString); 
-			else if (descriptor == Type.FLOAT_TYPE)
-				return Float.parseFloat(valueString);
-			else if (descriptor == Type.DOUBLE_TYPE)
-				return Double.parseDouble(valueString);
-			else if (descriptor.equals(Types.STRING_TYPE))
-				return valueString;
-			else if (descriptor.equals(Types.TYPE_TYPE))
-				return Type.getType(valueString);
-			else throw new UnpickSyntaxException("Cannot parse value " + valueString + " with descriptor " + descriptor);
+			return LiteralType.from(descriptor).parse(valueString);
 		}
 		catch (IllegalArgumentException e) 
 		{

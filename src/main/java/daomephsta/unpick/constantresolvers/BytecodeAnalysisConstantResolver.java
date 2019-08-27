@@ -1,22 +1,19 @@
 package daomephsta.unpick.constantresolvers;
 
+import static java.util.stream.Collectors.toSet;
+
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
 import org.objectweb.asm.*;
 
-import daomephsta.unpick.Types;
+import daomephsta.unpick.LiteralType;
 import daomephsta.unpick.constantmappers.IClassResolver;
 
 public class BytecodeAnalysisConstantResolver implements IConstantResolver
 {
-	private static final Set<Type> VALID_CONSTANT_TYPES = new HashSet<>();
-	static 
-	{
-		Collections.addAll(VALID_CONSTANT_TYPES, Type.INT_TYPE, Type.LONG_TYPE, Type.FLOAT_TYPE, Type.DOUBLE_TYPE, 
-			Types.STRING_TYPE, Types.TYPE_TYPE);
-	}
+	private static final Set<Type> VALID_CONSTANT_TYPES = Arrays.stream(LiteralType.values()).map(LiteralType::getType).collect(toSet());
 	
 	private final Map<String, ResolvedConstants> constantDataCache = new HashMap<>();
 	private final IClassResolver classResolver;

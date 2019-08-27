@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
 import daomephsta.unpick.AbstractInsnNodes;
@@ -269,7 +268,7 @@ public class SimpleConstantUninliningTest
 				.add()
 				.build();
 
-		String constantTypeDescriptor = Type.getDescriptor(TestUtils.unboxedType(constant.getClass()));
+		LiteralType literalType = LiteralType.from(constant.getClass());
 		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
 		MethodNode mockInvocation = TestUtils.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 
 				constant).getMockMethod();
@@ -278,7 +277,7 @@ public class SimpleConstantUninliningTest
 				invocationInsnIndex);
 		uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
 		ASMAssertions.assertReadsField(mockInvocation.instructions.get(invocationInsnIndex - 1), Constants.class, expectedConstant, 
-				constantTypeDescriptor);
+				literalType.getTypeDescriptor());
 	}
 
 	private void testKnownConstantReturn(Object constant, String expectedConstant)
