@@ -15,8 +15,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import daomephsta.unpick.AbstractInsnNodes;
-import daomephsta.unpick.IntegerType;
+import daomephsta.unpick.*;
 import daomephsta.unpick.constantmappers.IConstantMapper;
 import daomephsta.unpick.constantresolvers.ClasspathConstantResolver;
 import daomephsta.unpick.tests.lib.*;
@@ -47,21 +46,35 @@ public class FlagUninliningTest
 		private static void longConsumer(long test) {}
 	}
 	
-	@ParameterizedTest(name = "testKnownFlag {0}")
+	@ParameterizedTest(name = "{0} -> {1}")
 	@MethodSource("intFlagsProvider")
-	public void testKnownIntFlags(Integer testConstant, String[] expectedConstantCombination, String[] constantNames)
+	public void testKnownIntFlagsReturn(Integer testConstant, String[] expectedConstantCombination, String[] constantNames)
 	{
-		testKnownFlag(testConstant, expectedConstantCombination, constantNames, "intConsumer", "(I)V");
+		testKnownFlagsReturn(testConstant, expectedConstantCombination, constantNames);
 	}
 	
-	@ParameterizedTest(name = "testKnownFlag {0}L")
-	@MethodSource("longFlagsProvider")
-	public void testKnownLongFlags(Long testConstant, String[] expectedConstantCombination, String[] constantNames)
+	@ParameterizedTest(name = "{0} -> {1}")
+	@MethodSource("intFlagsProvider")
+	public void testKnownIntFlagsParameter(Integer testConstant, String[] expectedConstantCombination, String[] constantNames)
 	{
-		testKnownFlag(testConstant, expectedConstantCombination, constantNames, "longConsumer", "(J)V");
+		testKnownFlagsParameter(testConstant, expectedConstantCombination, constantNames, "intConsumer", "(I)V");
+	}
+	
+	@ParameterizedTest(name = "{0}L -> {1}")
+	@MethodSource("longFlagsProvider")
+	public void testKnownLongFlagsParameter(Long testConstant, String[] expectedConstantCombination, String[] constantNames)
+	{
+		testKnownFlagsParameter(testConstant, expectedConstantCombination, constantNames, "longConsumer", "(J)V");
+	}
+	
+	@ParameterizedTest(name = "{0}L -> {1}")
+	@MethodSource("longFlagsProvider")
+	public void testKnownLongFlagsReturn(Long testConstant, String[] expectedConstantCombination, String[] constantNames)
+	{
+		testKnownFlagsReturn(testConstant, expectedConstantCombination, constantNames);
 	}
 
-	private void testKnownFlag(Object testConstant, String[] expectedConstantCombination, String[] constantNames, String constantConsumerName, String constantConsumerDescriptor)
+	private void testKnownFlagsParameter(Number testConstant, String[] expectedConstantCombination, String[] constantNames, String constantConsumerName, String constantConsumerDescriptor)
 	{
 		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.flagConstantGroup("test")
@@ -96,23 +109,73 @@ public class FlagUninliningTest
 			ASMAssertions.assertOpcode(mockInvocation.instructions.get(j + 1), integerType.getOrOpcode());
 		}
 	}
+
+	private void testKnownFlagsReturn(Number testConstant, String[] expectedConstantCombination, String[] constantNames)
+	{
+		IntegerType integerType = IntegerType.from(testConstant.getClass());
+		MockMethod mock = MethodMocker.mock(integerType.getPrimitiveClass(), mv -> 
+		{
+			integerType.appendLiteralPushInsn(mv, testConstant.longValue());
+			integerType.appendReturnInsn(mv);
+		});
+		MethodNode mockMethod = mock.getMockMethod();
+		
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
+				.flagConstantGroup("test")
+					.defineAll(Constants.class, constantNames)
+				.add()
+				.targetMethod(mock.getMockClass().name, mockMethod.name, mockMethod.desc)
+					.remapReturn("test")
+				.add()
+				.build();
+
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
+		
+		uninliner.transformMethod(mock.getMockClass().name, mockMethod);
+		int minimumInsnCount = 2 * (expectedConstantCombination.length - 1) + 1;
+		assertTrue(mockMethod.instructions.size() >=  minimumInsnCount, 
+				String.format("Expected at least %d instructions, found %d", minimumInsnCount, mockMethod.instructions.size()));
+		ASMAssertions.assertOpcode(mockMethod.instructions.get(mockMethod.instructions.size() - 1), integerType.getReturnOpcode());
+		ASMAssertions.assertReadsField(mockMethod.instructions.get(0), Constants.class, 
+				expectedConstantCombination[0], integerType.getTypeDescriptor());
+		for (int j = 1; j < expectedConstantCombination.length; j += 2)
+		{
+			ASMAssertions.assertReadsField(mockMethod.instructions.get(j), Constants.class, 
+					expectedConstantCombination[j], integerType.getTypeDescriptor());
+			ASMAssertions.assertOpcode(mockMethod.instructions.get(j + 1), integerType.getOrOpcode());
+		}
+	}
 	
-	@ParameterizedTest(name = "testNegatedFlag ~{0}")
+	@ParameterizedTest(name = "~{0} -> {1}")
 	@MethodSource("intFlagsProvider")
-	public void testNegatedIntFlags(Integer testConstant, String[] expectedConstantCombination, String[] constantNames)
+	public void testNegatedIntFlagsParameter(Integer testConstant, String[] expectedConstantCombination, String[] constantNames)
 	{
-		testNegatedFlag(testConstant, expectedConstantCombination, constantNames, "intConsumer", "(I)V");
+		testNegatedFlagsParameter(testConstant, expectedConstantCombination, constantNames, "intConsumer", "(I)V");
 	}
 	
-	@ParameterizedTest(name = "testNegatedFlag ~{0}L")
+	@ParameterizedTest(name = "~{0} -> {1}")
+	@MethodSource("intFlagsProvider")
+	public void testNegatedIntFlagsReturn(Integer testConstant, String[] expectedConstantCombination, String[] constantNames)
+	{
+		testNegatedFlagsReturn(testConstant, expectedConstantCombination, constantNames);
+	}
+	
+	@ParameterizedTest(name = "~{0}L -> {1}")
 	@MethodSource("longFlagsProvider")
-	public void testNegatedLongFlags(Long testConstant, String[] expectedConstantCombination, String[] constantNames)
+	public void testNegatedLongFlagsParameter(Long testConstant, String[] expectedConstantCombination, String[] constantNames)
 	{
-		testNegatedFlag(testConstant, expectedConstantCombination, constantNames, "longConsumer", "(J)V");
+		testNegatedFlagsParameter(testConstant, expectedConstantCombination, constantNames, "longConsumer", "(J)V");
 	}
 	
-	private void testNegatedFlag(Number testConstant, String[] expectedConstantCombination, String[] constantNames, String consumerName, String consumerDescriptor)
+	@ParameterizedTest(name = "~{0}L -> {1}")
+	@MethodSource("longFlagsProvider")
+	public void testNegatedLongFlagsReturn(Long testConstant, String[] expectedConstantCombination, String[] constantNames)
 	{
+		testNegatedFlagsReturn(testConstant, expectedConstantCombination, constantNames);
+	}
+	
+	private void testNegatedFlagsParameter(Number testConstant, String[] expectedConstantCombination, String[] constantNames, String consumerName, String consumerDescriptor)
+	{		
 		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.flagConstantGroup("test")
 				.defineAll(Constants.class, constantNames)
@@ -125,12 +188,13 @@ public class FlagUninliningTest
 		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
 		IntegerType integerType = IntegerType.from(testConstant.getClass());
 
-		MockMethod mockMethod = MethodMocker.mock(mockWriter -> 
+		MockMethod mockMethod = MethodMocker.mock(void.class, mv -> 
 		{
-			mockWriter.visitFieldInsn(Opcodes.GETSTATIC, "Foo", "bar", integerType.getTypeDescriptor());
-			integerType.appendLiteralPushInsn(mockWriter, ~testConstant.longValue());
-			integerType.appendAndInsn(mockWriter);
-			mockWriter.visitMethodInsn(INVOKESTATIC, Methods.class.getName().replace('.', '/'), consumerName, consumerDescriptor, false);
+			mv.visitFieldInsn(Opcodes.GETSTATIC, "Foo", "bar", integerType.getTypeDescriptor());
+			integerType.appendLiteralPushInsn(mv, ~testConstant.longValue());
+			integerType.appendAndInsn(mv);
+			mv.visitMethodInsn(INVOKESTATIC, Methods.class.getName().replace('.', '/'), consumerName, consumerDescriptor, false);
+			mv.visitInsn(RETURN);
 		});
 		MethodNode mockInvocation = mockMethod.getMockMethod();
 		uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
@@ -147,21 +211,71 @@ public class FlagUninliningTest
 		}
 	}
 	
-	@ParameterizedTest(name = "testUnknownFlag {0}")
+	private void testNegatedFlagsReturn(Number testConstant, String[] expectedConstantCombination, String[] constantNames)
+	{
+		IntegerType integerType = IntegerType.from(testConstant.getClass());
+		MockMethod mock = MethodMocker.mock(integerType.getPrimitiveClass(), mv -> 
+		{
+			mv.visitFieldInsn(Opcodes.GETSTATIC, "Foo", "bar", integerType.getTypeDescriptor());
+			integerType.appendLiteralPushInsn(mv, ~testConstant.longValue());
+			integerType.appendAndInsn(mv);
+			integerType.appendReturnInsn(mv);
+		});
+		MethodNode mockMethod = mock.getMockMethod();
+		
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
+				.flagConstantGroup("test")
+					.defineAll(Constants.class, constantNames)
+				.add()
+				.targetMethod(mock.getMockClass().name, mockMethod.name, mockMethod.desc)
+					.remapReturn("test")
+				.add()
+				.build();
+
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
+		
+		uninliner.transformMethod(MethodMocker.CLASS_NAME, mockMethod);
+		ListIterator<AbstractInsnNode> instructions = mockMethod.instructions.iterator(0);
+		ASMAssertions.assertReadsField(instructions.next(), "Foo", "bar", integerType.getTypeDescriptor());
+
+		ASMAssertions.assertReadsField(instructions.next(), Constants.class, 
+				expectedConstantCombination[0], integerType.getTypeDescriptor());
+		for (int j = 1; j < expectedConstantCombination.length; j += 2)
+		{
+			ASMAssertions.assertReadsField(instructions.next(), Constants.class, 
+					expectedConstantCombination[j], integerType.getTypeDescriptor());
+			ASMAssertions.assertOpcode(instructions.next(), integerType.getOrOpcode());
+		}
+	}
+	
+	@ParameterizedTest(name = "{0} -> {0}")
 	@ValueSource(ints = {0b0000, 0b100000, 0b01000, 0b11000})
-	public void testUnknownIntFlags(Integer testConstant)
+	public void testUnknownIntFlagsParameter(Integer testConstant)
 	{
-		testUnknownConstant(testConstant, "intConsumer", "(I)V");
+		testUnknownFlagsParameter(testConstant, "intConsumer", "(I)V");
 	}
 	
-	@ParameterizedTest(name = "testUnknownFlag {0}L")
+	@ParameterizedTest(name = "{0} -> {0}")
+	@ValueSource(ints = {0b0000, 0b100000, 0b01000, 0b11000})
+	public void testUnknownIntFlagsReturn(Integer testConstant)
+	{
+		testUnknownFlagsReturn(testConstant);
+	}
+	
+	@ParameterizedTest(name = "{0}L -> {0}L")
 	@ValueSource(longs = {0b0000L, 0b100000L, 0b01000L, 0b11000L})
-	public void testUnknownLongFlags(Long testConstant)
+	public void testUnknownLongFlagsParameter(Long testConstant)
 	{
-		testUnknownConstant(testConstant, "longConsumer", "(J)V");
+		testUnknownFlagsParameter(testConstant, "longConsumer", "(J)V");
+	}
+	@ParameterizedTest(name = "{0}L -> {0}L")
+	@ValueSource(longs = {0b0000L, 0b100000L, 0b01000L, 0b11000L})
+	public void testUnknownLongFlagsReturn(Long testConstant)
+	{
+		testUnknownFlagsReturn(testConstant);
 	}
 	
-	private void testUnknownConstant(Number constant, String constantConsumerName, String constantConsumerDescriptor)
+	private void testUnknownFlagsParameter(Number constant, String constantConsumerName, String constantConsumerDescriptor)
 	{
 		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.flagConstantGroup("test")
@@ -182,6 +296,35 @@ public class FlagUninliningTest
 		//Should be unchanged, so this should still pass
 		checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, constant, mockInvocation, 
 				invocationInsnIndex);
+	}
+	
+	private void testUnknownFlagsReturn(Number testConstant)
+	{
+		IntegerType integerType = IntegerType.from(testConstant.getClass());
+		MockMethod mock = MethodMocker.mock(integerType.getPrimitiveClass(), mv -> 
+		{
+			integerType.appendLiteralPushInsn(mv, testConstant.longValue());
+			integerType.appendReturnInsn(mv);
+		});
+		MethodNode mockMethod = mock.getMockMethod();
+		
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
+				.flagConstantGroup("test")
+				.add()
+				.targetMethod(mock.getMockClass().name, mockMethod.name, mockMethod.desc)
+					.remapReturn("test")
+				.add()
+				.build();
+
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
+
+		MethodNode mockInvocation = mockMethod;
+		ASMAssertions.assertIsLiteral(mockInvocation.instructions.get(0), testConstant);
+		ASMAssertions.assertOpcode(mockInvocation.instructions.get(1), integerType.getReturnOpcode());
+		uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
+		//Should be unchanged, so this should still pass
+		ASMAssertions.assertIsLiteral(mockInvocation.instructions.get(0), testConstant);
+		ASMAssertions.assertOpcode(mockInvocation.instructions.get(1), integerType.getReturnOpcode());
 	}
 	
 	private static Stream<Arguments> intFlagsProvider()

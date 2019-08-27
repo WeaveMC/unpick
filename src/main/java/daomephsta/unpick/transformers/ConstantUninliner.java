@@ -1,8 +1,13 @@
 package daomephsta.unpick.transformers;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.logging.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.*;
@@ -102,6 +107,10 @@ public class ConstantUninliner
 				{
 					processMethodInvocation(method, (MethodInsnNode) insn, replacementSet, frames, i);
 				}
+				else if (insn instanceof InsnNode && insn.getOpcode() >= Opcodes.IRETURN && insn.getOpcode() <= Opcodes.ARETURN)
+				{
+					processMethodReturn(methodOwner, method, insn, replacementSet, frames, i);
+				}
 			}
 			replacementSet.apply();
 		}
@@ -121,14 +130,29 @@ public class ConstantUninliner
 		Type[] parameterTypes = Type.getArgumentTypes(methodInvocation.desc);
 		for (int parameterIndex = 0; parameterIndex < parameterTypes.length; parameterIndex++)
 		{
-			if (!mapper.targets(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex))
+			if (!mapper.targetsParameter(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex))
 				continue;
 			for (AbstractInsnNode sourceInsn : frame.getStack(frame.getStackSize() - parameterTypes.length + parameterIndex).insns)
 			{
 				Context context = new Context(constantResolver, replacementSet, sourceInsn, enclosingMethod.instructions, frames, logger);
 				logger.log(Level.INFO, String.format("Target: %s.%s#param-%d Arg Seed: %s", 
 						methodInvocation.owner, methodInvocation.name, parameterIndex, Utils.visitableToString(sourceInsn::accept)).trim());
-				mapper.map(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, context);
+				mapper.mapParameter(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, context);
+			}
+		}
+	}
+
+	private void processMethodReturn(String methodOwner, MethodNode method, AbstractInsnNode returnInsn, ReplacementSet replacementSet, 
+			Frame<SourceValue>[] frames, int instructionIndex)
+	{
+		if (mapper.targets(methodOwner, method.name, method.desc) 
+				&& mapper.targetsReturn(methodOwner, method.name, method.desc))
+		{
+			Frame<SourceValue> frame = frames[instructionIndex];
+			for (AbstractInsnNode sourceInsn : frame.getStack(0).insns) //Only one value on the stack before a return
+			{
+				Context context = new Context(constantResolver, replacementSet, sourceInsn, method.instructions, frames, logger);
+				mapper.mapReturn(methodOwner, method.name, method.desc, context );
 			}
 		}
 	}

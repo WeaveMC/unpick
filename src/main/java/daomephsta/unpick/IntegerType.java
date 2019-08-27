@@ -6,7 +6,7 @@ import org.objectweb.asm.tree.InsnNode;
 
 public enum IntegerType
 {
-	INT(Type.INT_TYPE, Opcodes.IAND) 
+	INT(Integer.class, int.class, Type.INT_TYPE, Opcodes.IAND, Opcodes.IRETURN) 
 	{
 		@Override
 		public AbstractInsnNode createLiteralPushInsn(long literal)
@@ -24,7 +24,7 @@ public enum IntegerType
 		public Number binaryNegate(Number value)
 			{ return ~value.intValue(); }
 	},
-	LONG(Type.LONG_TYPE, Opcodes.LAND) 
+	LONG(Long.class, long.class, Type.LONG_TYPE, Opcodes.LAND, Opcodes.LRETURN) 
 	{
 		@Override
 		public AbstractInsnNode createLiteralPushInsn(long literal)
@@ -43,13 +43,17 @@ public enum IntegerType
 			{ return ~value.longValue(); }
 	};
 	
+	private final Class<? extends Number> boxed, primitive;
 	private final Type type;
-	private final int logicalOpcodesStart;
+	private final int logicalOpcodesStart, returnOpcode;
 	
-	private IntegerType(Type type, int startOpcode)
+	private IntegerType(Class<? extends Number> boxed, Class<? extends Number> primitive, Type type, int logicalOpcodesStart, int returnOpcode)
 	{
+		this.boxed = boxed;
+		this.primitive = primitive;
 		this.type = type;
-		this.logicalOpcodesStart = startOpcode;
+		this.logicalOpcodesStart = logicalOpcodesStart;
+		this.returnOpcode = returnOpcode;
 	}
 	
 	public static IntegerType from(Class<?> clazz)
@@ -107,6 +111,21 @@ public enum IntegerType
 		return logicalOpcodesStart + 4;
 	}
 	
+	public AbstractInsnNode createReturnInsn()
+	{
+		return new InsnNode(getReturnOpcode());
+	}
+	
+	public void appendReturnInsn(MethodVisitor mv)
+	{
+		mv.visitInsn(getReturnOpcode());
+	}
+	
+	public int getReturnOpcode()
+	{
+		return returnOpcode;
+	}
+
 	public abstract AbstractInsnNode createLiteralPushInsn(long literal);
 	
 	public abstract void appendLiteralPushInsn(MethodVisitor mv, long literal);
@@ -114,6 +133,16 @@ public enum IntegerType
 	public String getTypeDescriptor()
 	{
 		return type.getDescriptor();
+	}
+	
+	public Class<? extends Number> getBoxClass()
+	{
+		return boxed;
+	}
+	
+	public Class<? extends Number> getPrimitiveClass()
+	{
+		return primitive;
 	}
 
 	public abstract Number box(long value);

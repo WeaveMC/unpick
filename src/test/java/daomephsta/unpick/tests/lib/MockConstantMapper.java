@@ -43,7 +43,12 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 
 		public TargetMethodBuilder targetMethod(Class<?> owner, String name, String descriptor)
 		{
-			return new TargetMethodBuilder(this, owner.getName().replace('.', '/'), name, descriptor);
+			return targetMethod(owner.getName().replace('.', '/'), name, descriptor);
+		}
+
+		public TargetMethodBuilder targetMethod(String owner, String name, String descriptor)
+		{
+			return new TargetMethodBuilder(this, owner, name, descriptor);
 		}
 		
 		public ConstantGroupBuilder<SimpleConstantDefinition> simpleConstantGroup(String name)
@@ -85,6 +90,12 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 		public TargetMethodBuilder remapParameter(int parameterIndex, String constantGroup)
 		{
 			targetMethodBuilder.parameterGroup(parameterIndex, constantGroup);
+			return this;
+		}
+		
+		public TargetMethodBuilder remapReturn(String constantGroup)
+		{
+			targetMethodBuilder.returnGroup(constantGroup);
 			return this;
 		}
 		

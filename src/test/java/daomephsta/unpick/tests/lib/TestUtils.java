@@ -1,6 +1,7 @@
 package daomephsta.unpick.tests.lib;
 
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.RETURN;
 
 import java.io.*;
 import java.util.HashMap;
@@ -64,10 +65,11 @@ public class TestUtils
 					expectedType.getClassName(), actualType.getClassName()));
 		}
 		
-		return MethodMocker.mock(mockWriter -> 
+		return MethodMocker.mock(void.class, mv -> 
 		{
-			InstructionFactory.pushesValue(mockWriter, constant);
-			mockWriter.visitMethodInsn(INVOKESTATIC, methodOwner.getName().replace('.', '/'), methodName, methodDescriptor, false);
+			InstructionFactory.pushesValue(mv, constant);
+			mv.visitMethodInsn(INVOKESTATIC, methodOwner.getName().replace('.', '/'), methodName, methodDescriptor, false);
+			mv.visitInsn(RETURN);
 		});
 	}
 	

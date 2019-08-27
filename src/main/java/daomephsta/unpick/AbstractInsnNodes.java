@@ -51,29 +51,6 @@ public class AbstractInsnNodes
 	
 	public static boolean isLiteral(AbstractInsnNode insn, Object literal)
 	{
-		switch (insn.getOpcode())
-		{
-		case ICONST_M1:
-		case ICONST_0:
-		case ICONST_1:
-		case ICONST_2:
-		case ICONST_3:
-		case ICONST_4:
-		case ICONST_5:
-			return literal.equals(insn.getOpcode() - ICONST_0); //Neat trick that works because the opcodes are sequential
-		case LCONST_0:
-		case LCONST_1:
-			return literal.equals((long) insn.getOpcode() - LCONST_0);
-			
-		case BIPUSH:
-		case SIPUSH:
-			return literal.equals(((IntInsnNode) insn).operand);
-			
-		case LDC:
-			return literal.equals(((LdcInsnNode) insn).cst);
-
-		default :
-			throw new UnsupportedOperationException("No value retrieval method programmed for " + Utils.visitableToString(insn::accept).trim());
-		}
+		return getLiteralValue(insn).equals(literal);
 	}
 }

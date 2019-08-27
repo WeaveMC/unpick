@@ -31,16 +31,28 @@ public class TargetMethods
 		return targetMethod.implementedBy(classResolver, methodOwner);	
 	}
 
-	public boolean targets(String methodOwner, String methodName, String methodDescriptor, int parameterIndex)
+	public boolean targetsParameter(String methodOwner, String methodName, String methodDescriptor, int parameterIndex)
 	{
 		TargetMethod targetMethod = methods.get(methodName + methodDescriptor);
 		return targetMethod.hasParameterConstantGroup(parameterIndex);
+	}
+	
+	public boolean targetsReturn(String methodOwner, String methodName, String methodDescriptor)
+	{
+		TargetMethod targetMethod = methods.get(methodName + methodDescriptor);
+		return targetMethod.hasReturnConstantGroup();
 	}
 
 	public String getParameterConstantGroup(String methodOwner, String methodName, String methodDescriptor, int parameterIndex)
 	{
 		TargetMethod targetMethod = methods.get(methodName + methodDescriptor);
 		return targetMethod.getParameterConstantGroup(parameterIndex);
+	}
+	
+	public String getReturnConstantGroup(String methodOwner, String methodName, String methodDescriptor)
+	{
+		TargetMethod targetMethod = methods.get(methodName + methodDescriptor);
+		return targetMethod.getReturnConstantGroup();
 	}
 	
 	@Override
@@ -76,7 +88,7 @@ public class TargetMethods
 		private final String owner, name;
 		private final Type descriptor;
 		private final Map<Integer, String> parameterConstantGroups;
-		private Optional<String> returnConstantGroup;
+		private String returnConstantGroup;
 		
 		TargetMethodBuilder(Builder parent, String owner, String name, Type descriptor)
 		{
@@ -97,16 +109,16 @@ public class TargetMethods
 		
 		public TargetMethodBuilder returnGroup(String constantGroup)
 		{
-			if (returnConstantGroup.isPresent())
-				throw new DuplicateMappingException("Return is already mapped to constant group " + returnConstantGroup.get());
+			if (returnConstantGroup != null)
+				throw new DuplicateMappingException("Return is already mapped to constant group " + returnConstantGroup);
 			else
-				returnConstantGroup = Optional.of(constantGroup);
+				returnConstantGroup = constantGroup;
 			return this;
 		}
 		
 		public Builder add()
 		{
-			parent.targetMethods.put(name + descriptor, new TargetMethod(owner, name, descriptor, parameterConstantGroups));
+			parent.targetMethods.put(name + descriptor, new TargetMethod(owner, name, descriptor, parameterConstantGroups, returnConstantGroup));
 			return parent;
 		}
 	}
@@ -123,6 +135,7 @@ public class TargetMethods
 								  nonimplementors = new HashSet<>();
 		private final Type descriptor;
 		private final Map<Integer, String> parameterConstantGroups;
+		private final String returnConstantGroup;
 		
 		/**
 		 * Constructs a new instance of TargetMethod with the specified parameters.
@@ -131,13 +144,16 @@ public class TargetMethods
 		 * @param descriptor the descriptor of the represented method.
 		 * @param parameterConstantGroups a Map that maps a parameter index to the name
 		 * of the constant group that contains all valid constants for that parameter. 
+		 * @param returnConstantGroup the id of the constant group containing all constants 
+		 * that are returned from the represented method and its implementations. 
 		 */
-		public TargetMethod(String owner, String name, Type descriptor, Map<Integer, String> parameterConstantGroups)
+		public TargetMethod(String owner, String name, Type descriptor, Map<Integer, String> parameterConstantGroups, String returnConstantGroup)
 		{
 			this.declarator = owner;
 			this.name = name;
 			this.descriptor = descriptor;
 			this.parameterConstantGroups = parameterConstantGroups;
+			this.returnConstantGroup = returnConstantGroup;
 		}
 		
 		/**
@@ -158,6 +174,19 @@ public class TargetMethods
 		public boolean hasParameterConstantGroup(int parameterIndex)
 		{
 			return parameterConstantGroups.containsKey(parameterIndex);
+		}
+		
+		/**
+		 * @return true if a constant group mapping exists for the return
+		 */ 
+		public boolean hasReturnConstantGroup()
+		{
+			return returnConstantGroup != null;
+		}
+		
+		public String getReturnConstantGroup()
+		{
+			return returnConstantGroup;
 		}
 		
 		public boolean implementedBy(IClassResolver classResolver, String classInternalName)

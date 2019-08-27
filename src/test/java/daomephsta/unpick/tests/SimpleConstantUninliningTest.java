@@ -12,9 +12,11 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
 import daomephsta.unpick.AbstractInsnNodes;
+import daomephsta.unpick.LiteralType;
 import daomephsta.unpick.constantmappers.IConstantMapper;
 import daomephsta.unpick.constantresolvers.ClasspathConstantResolver;
 import daomephsta.unpick.tests.lib.*;
+import daomephsta.unpick.tests.lib.MethodMocker.MockMethod;
 import daomephsta.unpick.transformers.ConstantUninliner;
 
 public class SimpleConstantUninliningTest
@@ -62,11 +64,18 @@ public class SimpleConstantUninliningTest
 						   		   STRING_CONST_BAR = "bar";
 	}
 	
-	@ParameterizedTest(name = "testKnownLong {1}={0}")
+	@ParameterizedTest(name = "{0} -> {1}")
 	@MethodSource("knownIntsProvider")
-	public void testKnownIntConstants(Integer constant, String constantName)
+	public void testKnownIntConstantsParameter(Integer constant, String constantName)
 	{	
-		testKnownConstant(constant, constantName, "intConsumer", "(I)V");
+		testKnownConstantParameter(constant, constantName, "intConsumer", "(I)V");
+	}
+	
+	@ParameterizedTest(name = "{0} -> {1}")
+	@MethodSource("knownIntsProvider")
+	public void testKnownIntConstantsReturn(Integer constant, String constantName)
+	{	
+		testKnownConstantReturn(constant, constantName);
 	}
 	
 	private static Stream<Arguments> knownIntsProvider()
@@ -83,18 +92,32 @@ public class SimpleConstantUninliningTest
 		);
 	}
 	
-	@ParameterizedTest(name = "testUnknownInt {0}")
+	@ParameterizedTest(name = "{0}")
 	@ValueSource(ints = {8, 13, 42, -1, -7, -23})
-	public void testUnknownIntConstants(Integer constant)
+	public void testUnknownIntConstantsParameter(Integer constant)
 	{
-		testUnknownConstant(constant, "intConsumer", "(I)V");
+		testUnknownConstantParameter(constant, "intConsumer", "(I)V");
 	}
 	
-	@ParameterizedTest(name = "testKnownLong {1}={0}L")
-	@MethodSource("knownLongsProvider")
-	public void testKnownLongConstants(Long constant, String constantName)
+	@ParameterizedTest(name = "{0}")
+	@ValueSource(ints = {8, 13, 42, -1, -7, -23})
+	public void testUnknownIntConstantsReturn(Integer constant)
 	{
-		testKnownConstant(constant, constantName, "longConsumer", "(J)V");
+		testUnknownConstantReturn(constant);
+	}
+	
+	@ParameterizedTest(name = "{0}L -> {1}")
+	@MethodSource("knownLongsProvider")
+	public void testKnownLongConstantsParameter(Long constant, String constantName)
+	{
+		testKnownConstantParameter(constant, constantName, "longConsumer", "(J)V");
+	}
+	
+	@ParameterizedTest(name = "{0}L -> {1}")
+	@MethodSource("knownLongsProvider")
+	public void testKnownLongConstantsReturn(Long constant, String constantName)
+	{
+		testKnownConstantReturn(constant, constantName);
 	}
 	
 	private static Stream<Arguments> knownLongsProvider()
@@ -107,18 +130,32 @@ public class SimpleConstantUninliningTest
 		);
 	}
 	
-	@ParameterizedTest(name = "testUnknownLong {0}L")
+	@ParameterizedTest(name = "{0}L")
 	@ValueSource(longs = {8L, 13L, 42L, -1L, -7L, -23L})
-	public void testUnknownLongConstants(Long constant)
+	public void testUnknownLongConstantsParameter(Long constant)
 	{	
-		testUnknownConstant(constant, "longConsumer", "(J)V");
+		testUnknownConstantParameter(constant, "longConsumer", "(J)V");
 	}
 	
-	@ParameterizedTest(name = "testKnownFloat {1}={0}F")
-	@MethodSource("knownFloatsProvider")
-	public void testKnownFloatConstants(Float constant, String constantName)
+	@ParameterizedTest(name = "{0}L")
+	@ValueSource(longs = {8L, 13L, 42L, -1L, -7L, -23L})
+	public void testUnknownLongConstantsReturn(Long constant)
 	{	
-		testKnownConstant(constant, constantName, "floatConsumer", "(F)V");
+		testUnknownConstantReturn(constant);
+	}
+	
+	@ParameterizedTest(name = "{0}F -> {1}")
+	@MethodSource("knownFloatsProvider")
+	public void testKnownFloatConstantsParameter(Float constant, String constantName)
+	{	
+		testKnownConstantParameter(constant, constantName, "floatConsumer", "(F)V");
+	}
+	
+	@ParameterizedTest(name = "{0}F -> {1}")
+	@MethodSource("knownFloatsProvider")
+	public void testKnownFloatConstantsReturn(Float constant, String constantName)
+	{	
+		testKnownConstantReturn(constant, constantName);
 	}
 	
 	private static Stream<Arguments> knownFloatsProvider()
@@ -132,18 +169,32 @@ public class SimpleConstantUninliningTest
 		);
 	}
 	
-	@ParameterizedTest(name = "testUnknownFloat {0}F")
+	@ParameterizedTest(name = "{0}F")
 	@ValueSource(floats = {0.15F, 1.973F, 24.5F, -0.64F, -2.3F, -21.0F})
-	public void testUnknownFloatConstants(Float constant)
+	public void testUnknownFloatConstantsParameter(Float constant)
 	{	
-		testUnknownConstant(constant, "floatConsumer", "(F)V");
+		testUnknownConstantParameter(constant, "floatConsumer", "(F)V");
 	}
 	
-	@ParameterizedTest(name = "testKnownDouble {1}={0}D")
+	@ParameterizedTest(name = "{0}F")
+	@ValueSource(floats = {0.15F, 1.973F, 24.5F, -0.64F, -2.3F, -21.0F})
+	public void testUnknownFloatConstantsReturn(Float constant)
+	{	
+		testUnknownConstantReturn(constant);
+	}
+	
+	@ParameterizedTest(name = "{0}D -> {1}")
 	@MethodSource("knownDoublesProvider")
-	public void testKnownDoubleConstants(Double constant, String constantName)
+	public void testKnownDoubleConstantsParameter(Double constant, String constantName)
 	{
-		testKnownConstant(constant, constantName, "doubleConsumer", "(D)V");
+		testKnownConstantParameter(constant, constantName, "doubleConsumer", "(D)V");
+	}
+	
+	@ParameterizedTest(name = "{0}D -> {1}")
+	@MethodSource("knownDoublesProvider")
+	public void testKnownDoubleConstantsReturn(Double constant, String constantName)
+	{
+		testKnownConstantReturn(constant, constantName);
 	}
 	
 	private static Stream<Arguments> knownDoublesProvider()
@@ -156,18 +207,32 @@ public class SimpleConstantUninliningTest
 		);
 	}
 	
-	@ParameterizedTest(name = "testUnknownDouble {0}D")
+	@ParameterizedTest(name = "{0}D")
 	@ValueSource(doubles = {0.15D, 1.973D, 24.5D, -0.64D, -2.3D, -21.0D})
-	public void testUnknownDoubleConstants(Double constant)
+	public void testUnknownDoubleConstantsParameter(Double constant)
 	{
-		testUnknownConstant(constant, "doubleConsumer", "(D)V");
+		testUnknownConstantParameter(constant, "doubleConsumer", "(D)V");
 	}
 	
-	@ParameterizedTest(name = "testKnownString {1}=\"{0}\"")
-	@MethodSource("knownStringsProvider")
-	public void testKnownStringConstants(String constant, String constantName)
+	@ParameterizedTest(name = "{0}D")
+	@ValueSource(doubles = {0.15D, 1.973D, 24.5D, -0.64D, -2.3D, -21.0D})
+	public void testUnknownDoubleConstantsREtrun(Double constant)
 	{
-		testKnownConstant(constant, constantName, "stringConsumer", "(Ljava/lang/String;)V");
+		testUnknownConstantReturn(constant);
+	}
+	
+	@ParameterizedTest(name = "\"{0}\" -> {1}")
+	@MethodSource("knownStringsProvider")
+	public void testKnownStringConstantsParameter(String constant, String constantName)
+	{
+		testKnownConstantParameter(constant, constantName, "stringConsumer", "(Ljava/lang/String;)V");
+	}
+	
+	@ParameterizedTest(name = "\"{0}\" -> {1}")
+	@MethodSource("knownStringsProvider")
+	public void testKnownStringConstantsReturn(String constant, String constantName)
+	{
+		testKnownConstantReturn(constant, constantName);
 	}
 	
 	private static Stream<Arguments> knownStringsProvider()
@@ -179,14 +244,21 @@ public class SimpleConstantUninliningTest
 		);
 	}
 	
-	@ParameterizedTest(name = "testUnknownString \"{0}\"")
+	@ParameterizedTest(name = "\"{0}\"")
 	@ValueSource(strings = {"baz", "QUX", "1_QuZ_3", "PotatoesareGREAT"})
-	public void testUnknownStringConstants(String constant)
+	public void testUnknownStringConstantsParameter(String constant)
 	{
-		testUnknownConstant(constant, "stringConsumer", "(Ljava/lang/String;)V");
+		testUnknownConstantParameter(constant, "stringConsumer", "(Ljava/lang/String;)V");
+	}
+	
+	@ParameterizedTest(name = "\"{0}\"")
+	@ValueSource(strings = {"baz", "QUX", "1_QuZ_3", "PotatoesareGREAT"})
+	public void testUnknownStringConstantsReturn(String constant)
+	{
+		testUnknownConstantReturn(constant);
 	}
 
-	private void testKnownConstant(Object constant, String expectedConstant, String constantConsumerName, String constantConsumerDescriptor)
+	private void testKnownConstantParameter(Object constant, String expectedConstant, String constantConsumerName, String constantConsumerDescriptor)
 	{
 		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.simpleConstantGroup("test")
@@ -208,8 +280,38 @@ public class SimpleConstantUninliningTest
 		ASMAssertions.assertReadsField(mockInvocation.instructions.get(invocationInsnIndex - 1), Constants.class, expectedConstant, 
 				constantTypeDescriptor);
 	}
+
+	private void testKnownConstantReturn(Object constant, String expectedConstant)
+	{
+		LiteralType literalType = LiteralType.from(constant.getClass());
+		
+		MockMethod mock = MethodMocker.mock(literalType.getPrimitiveClass(), mv -> 
+		{
+			literalType.appendLiteralPushInsn(mv, constant);
+			literalType.appendReturnInsn(mv);
+		});
+		MethodNode mockMethod = mock.getMockMethod();
+		
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
+				.simpleConstantGroup("test")
+					.define(Constants.class, expectedConstant)
+				.add()
+				.targetMethod(mock.getMockClass().name, mockMethod.name, mockMethod.desc)
+					.remapReturn("test")
+				.add()
+				.build();
+
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
+
+		int returnInsnIndex = 1;
+		ASMAssertions.assertIsLiteral(mockMethod.instructions.get(returnInsnIndex - 1), constant);
+		ASMAssertions.assertOpcode(mockMethod.instructions.get(returnInsnIndex), literalType.getReturnOpcode());
+		uninliner.transformMethod(mock.getMockClass().name, mockMethod);
+		ASMAssertions.assertReadsField(mockMethod.instructions.get(returnInsnIndex - 1), Constants.class, expectedConstant, 
+				literalType.getTypeDescriptor());
+	}
 	
-	private void testUnknownConstant(Object constant, String constantConsumerName, String constantConsumerDescriptor)
+	private void testUnknownConstantParameter(Object constant, String constantConsumerName, String constantConsumerDescriptor)
 	{
 		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
 				.simpleConstantGroup("test")
@@ -229,6 +331,33 @@ public class SimpleConstantUninliningTest
 		//Should be unchanged, so this should still pass
 		checkMockInvocationStructure(constantConsumerName, constantConsumerDescriptor, constant, mockInvocation, 
 				invocationInsnIndex);
+	}
+	
+	private void testUnknownConstantReturn(Object constant)
+	{
+		LiteralType literalType = LiteralType.from(constant.getClass());
+		MockMethod mock = MethodMocker.mock(literalType.getPrimitiveClass(), mv -> 
+		{
+			literalType.appendLiteralPushInsn(mv, constant);
+			literalType.appendReturnInsn(mv);
+		});
+		MethodNode mockMethod = mock.getMockMethod();
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
+				.simpleConstantGroup("test")
+				.add()
+				.targetMethod(mock.getMockClass().name, mockMethod.name, mockMethod.desc)
+					.remapReturn("test")
+				.add()
+				.build();
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
+
+		int returnInsnIndex = 1;
+		ASMAssertions.assertIsLiteral(mockMethod.instructions.get(returnInsnIndex - 1), constant);
+		ASMAssertions.assertOpcode(mockMethod.instructions.get(returnInsnIndex), literalType.getReturnOpcode());
+		uninliner.transformMethod(mock.getMockClass().name, mockMethod);
+		//Should be unchanged, so this should still pass
+		ASMAssertions.assertIsLiteral(mockMethod.instructions.get(returnInsnIndex - 1), constant);
+		ASMAssertions.assertOpcode(mockMethod.instructions.get(returnInsnIndex), literalType.getReturnOpcode());
 	}
 
 	private void checkMockInvocationStructure(String constantConsumerName,

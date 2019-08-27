@@ -13,7 +13,8 @@ import org.objectweb.asm.util.CheckClassAdapter;
 
 public class MethodMocker
 {
-	public static final String CLASS_NAME = "Invoker";
+	public static final String CLASS_NAME = "MockClass";
+	private static final String METHOD_NAME = "mock";
 	private static final String[] NO_EXCEPTIONS = null,
 								  NO_INTERFACES = null;
 	private static final String NO_SIGNATURE = null,
@@ -41,14 +42,18 @@ public class MethodMocker
 		}
 	}
 	
-	public static MockMethod mock(Consumer<MethodVisitor> bodyGenerator)
+	public static MockMethod mock(Class<?> returnType, Consumer<MethodVisitor> bodyGenerator)
 	{	
 		ClassWriter mockClassWriter = new ClassWriter(COMPUTE_FRAMES);
+
+		StringBuilder descriptorBuilder = new StringBuilder("()");
+		descriptorBuilder.append(Type.getDescriptor(returnType));
+		String descriptor = descriptorBuilder.toString();
+		
 		mockClassWriter.visit(V1_8, ACC_PUBLIC, CLASS_NAME, NO_SIGNATURE, OBJECT_SUPERCLASS, NO_INTERFACES);
 		{
-			MethodVisitor mockWriter = mockClassWriter.visitMethod(ACC_PUBLIC | ACC_STATIC, "mock", "()V", NO_SIGNATURE, NO_EXCEPTIONS);
+			MethodVisitor mockWriter = mockClassWriter.visitMethod(ACC_PUBLIC | ACC_STATIC, METHOD_NAME, descriptor, NO_SIGNATURE, NO_EXCEPTIONS);
 			bodyGenerator.accept(mockWriter);
-			mockWriter.visitInsn(RETURN); // return;
 			mockWriter.visitMaxs(0, 0); //Trigger computation of stack size and local variable count
 			mockWriter.visitEnd();
 		}
@@ -58,6 +63,6 @@ public class MethodMocker
 		CheckClassAdapter.verify(classReader, false, new PrintWriter(System.out));
 		ClassNode mockClass = new ClassNode();
 		classReader.accept(mockClass, 0);
-		return new MockMethod(MethodFetcher.fetch(mockClass, "mock()V"), mockClass);
+		return new MockMethod(MethodFetcher.fetch(mockClass, METHOD_NAME + descriptor), mockClass);
 	}
 }
