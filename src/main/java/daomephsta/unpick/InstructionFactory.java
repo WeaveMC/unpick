@@ -3,6 +3,7 @@ package daomephsta.unpick;
 import static org.objectweb.asm.Opcodes.*;
 
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 public class InstructionFactory
@@ -25,6 +26,8 @@ public class InstructionFactory
 			return pushesBoolean((boolean) value);
 		else if (value instanceof String)
 			return pushesString((String) value);
+		else if (value instanceof Type)
+			return pushesTypeReference((Type) value);
 		else
 			throw new UnsupportedOperationException("Pushing reference types is not supported");
 	}
@@ -47,6 +50,8 @@ public class InstructionFactory
 			pushesBoolean(method, (boolean) value);
 		else if (value instanceof String)
 			pushesString(method, (String) value);
+		else if (value instanceof Type)
+			pushesTypeReference(method, (Type) value);
 		else
 			throw new UnsupportedOperationException("Pushing reference types is not supported");
 	}
@@ -164,5 +169,15 @@ public class InstructionFactory
 	public static void pushesString(MethodVisitor method, String s)
 	{
 		method.visitLdcInsn(s);
+	}
+	
+	public static AbstractInsnNode pushesTypeReference(Type type)
+	{
+		return new LdcInsnNode(type);
+	}
+	
+	public static void pushesTypeReference(MethodVisitor method, Type type)
+	{
+		method.visitLdcInsn(type);
 	}
 }
