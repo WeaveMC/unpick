@@ -15,12 +15,13 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import daomephsta.unpick.*;
-import daomephsta.unpick.constantmappers.IConstantMapper;
-import daomephsta.unpick.constantresolvers.ClasspathConstantResolver;
+import daomephsta.unpick.api.ConstantUninliner;
+import daomephsta.unpick.api.constantmappers.IConstantMapper;
+import daomephsta.unpick.impl.AbstractInsnNodes;
+import daomephsta.unpick.impl.IntegerType;
+import daomephsta.unpick.impl.constantresolvers.ClasspathConstantResolver;
 import daomephsta.unpick.tests.lib.*;
 import daomephsta.unpick.tests.lib.MethodMocker.MockMethod;
-import daomephsta.unpick.transformers.ConstantUninliner;
 
 public class FlagUninliningTest
 {

@@ -10,13 +10,13 @@ import org.junit.jupiter.params.provider.*;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.MethodNode;
 
-import daomephsta.unpick.AbstractInsnNodes;
-import daomephsta.unpick.LiteralType;
-import daomephsta.unpick.constantmappers.IConstantMapper;
-import daomephsta.unpick.constantresolvers.ClasspathConstantResolver;
+import daomephsta.unpick.api.ConstantUninliner;
+import daomephsta.unpick.api.constantmappers.IConstantMapper;
+import daomephsta.unpick.impl.AbstractInsnNodes;
+import daomephsta.unpick.impl.LiteralType;
+import daomephsta.unpick.impl.constantresolvers.ClasspathConstantResolver;
 import daomephsta.unpick.tests.lib.*;
 import daomephsta.unpick.tests.lib.MethodMocker.MockMethod;
-import daomephsta.unpick.transformers.ConstantUninliner;
 
 public class SimpleConstantUninliningTest
 {

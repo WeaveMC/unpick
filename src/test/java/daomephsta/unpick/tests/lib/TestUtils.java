@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
 
-import daomephsta.unpick.*;
+import daomephsta.unpick.impl.*;
 import daomephsta.unpick.tests.lib.MethodMocker.MockMethod;
 
 public class TestUtils

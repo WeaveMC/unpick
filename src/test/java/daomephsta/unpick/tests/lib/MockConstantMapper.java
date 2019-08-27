@@ -6,9 +6,9 @@ import java.util.function.Supplier;
 
 import org.objectweb.asm.Type;
 
-import daomephsta.unpick.constantmappers.IClassResolver;
-import daomephsta.unpick.constantmappers.SimpleAbstractConstantMapper;
-import daomephsta.unpick.representations.*;
+import daomephsta.unpick.api.IClassResolver;
+import daomephsta.unpick.impl.constantmappers.SimpleAbstractConstantMapper;
+import daomephsta.unpick.impl.representations.*;
 
 public class MockConstantMapper extends SimpleAbstractConstantMapper
 {

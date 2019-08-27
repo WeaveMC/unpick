@@ -7,8 +7,8 @@ import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.util.Printer;
 
-import daomephsta.unpick.AbstractInsnNodes;
-import daomephsta.unpick.Utils;
+import daomephsta.unpick.impl.AbstractInsnNodes;
+import daomephsta.unpick.impl.Utils;
 
 public class ASMAssertions
 {
