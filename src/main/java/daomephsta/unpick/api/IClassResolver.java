@@ -13,6 +13,7 @@ public interface IClassResolver
 	/**
 	 * @param internalName the internal name of the class to resolve
 	 * @return a {@link ClassReader} for the resolved class
+	 * @throws IOException if construction of the ClassReader throws an IOException
 	 */
 	public ClassReader resolveClass(String internalName) throws IOException;
 }
