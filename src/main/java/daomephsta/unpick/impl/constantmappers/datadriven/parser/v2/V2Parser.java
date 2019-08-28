@@ -8,9 +8,9 @@ import java.util.function.IntSupplier;
 import org.objectweb.asm.Type;
 
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
-import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Definitions;
-import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Definitions.TargetMethodDefinitionVisitor;
-import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Definitions.Visitor;
+import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Reader;
+import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Reader.TargetMethodDefinitionVisitor;
+import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Reader.Visitor;
 import daomephsta.unpick.impl.representations.*;
 import daomephsta.unpick.impl.representations.TargetMethods.DuplicateMappingException;
 import daomephsta.unpick.impl.representations.TargetMethods.TargetMethodBuilder;
@@ -29,7 +29,7 @@ public class V2Parser implements Visitor
 
 	public static void parse(InputStream mappingSource, Map<String, ReplacementInstructionGenerator> constantGroups, TargetMethods.Builder targetMethodsBuilder) throws IOException
 	{
-		try (UnpickV2Definitions unpickDefinitions = new UnpickV2Definitions(mappingSource))
+		try (UnpickV2Reader unpickDefinitions = new UnpickV2Reader(mappingSource))
 		{
 			unpickDefinitions.accept(new V2Parser(constantGroups, targetMethodsBuilder));
 		}
