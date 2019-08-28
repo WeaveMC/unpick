@@ -5,9 +5,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import daomephsta.unpick.constantmappers.datadriven.parser.MethodKey;
-import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Definitions.TargetMethodDefinitionVisitor;
-import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Definitions.Visitor;
+import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Reader.TargetMethodDefinitionVisitor;
+import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Reader.Visitor;
 
+/**
+ * Remaps names and descriptors of target method definitions, then makes a delegate visitor visit the remapped target methods.
+ * All other visitor methods only delegate to the delegate visitor.
+ * @author Daomephsta
+ */
 public class UnpickV2Remapper implements Visitor
 {
 	private static final Pattern OBJECT_SIGNATURE_FINDER = Pattern.compile("L([a-zA-Z0-9$_\\/]+);");
@@ -15,6 +20,13 @@ public class UnpickV2Remapper implements Visitor
 	private final Map<MethodKey, String> methodMappings;
 	private final Visitor delegate;
 
+	/**
+	 * Creates a new {@link UnpickV2Remapper}.
+	 * @param classMappings a mapping of old class names to new class names.
+	 * @param methodMappings a mapping of old method names, owner classes, and descriptors; to new method names.
+	 * @param delegate the visitor that should visit the remapped target method definitions. 
+	 * All other visitor methods only delegate to the delegate visitor.
+	 */
 	public UnpickV2Remapper(Map<String, String> classMappings, Map<MethodKey, String> methodMappings, Visitor delegate)
 	{
 		this.classMappings = classMappings;

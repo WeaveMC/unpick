@@ -9,19 +9,33 @@ import java.util.stream.Stream;
 
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
 
-public class UnpickV2Definitions implements Closeable
+/**
+ * Performs basic syntax checking on .unpick v2 format text, 
+ * and allows its structure to be visited by instances of {@link Visitor}. 
+ * @author Daomephsta
+ */
+public class UnpickV2Reader implements Closeable
 {
 	private static final Pattern WHITESPACE_SPLITTER = Pattern.compile("\\s");
 	private final InputStream definitionsStream;
 	
 	private TargetMethodDefinitionVisitor lastTargetMethodVisitor = null;
 
-	public UnpickV2Definitions(InputStream definitionsStream)
+	/**
+	 * Creates a new reader from an input stream
+	 * @param definitionsStream a stream of text in 
+	 * <a href="https://github.com/Daomephsta/unpick/wiki/Unpick-Format">.unpick v2 format</a> 
+	 */
+	public UnpickV2Reader(InputStream definitionsStream)
 	{
 		this.definitionsStream = definitionsStream;
 	}
 	
 	private static final Set<String> TARGET_METHOD_ARGS = Stream.of("param", "return").collect(toSet());
+	/**
+	 * Makes {@code visitor} visit the structure of the parsed file
+	 * @param visitor the visitor
+	 */
 	public void accept(Visitor visitor)
 	{
 		try(LineNumberReader reader = new LineNumberReader(new InputStreamReader(definitionsStream)))
@@ -151,30 +165,76 @@ public class UnpickV2Definitions implements Closeable
 	}
 	
 	private static final TargetMethodDefinitionVisitor DEFAULT = new TargetMethodDefinitionVisitor() {};
+	/**
+	 * A visitor for visiting the structure of <a href="https://github.com/Daomephsta/unpick/wiki/Unpick-Format">.unpick v2 format</a> text 
+	 * @author Daomephsta
+	 */
 	public static interface Visitor
 	{
+		/**Visits the start of the file. This is the first method called.**/
 		public default void startVisit() {}
 		
+		/**
+		 * Visits the line number.
+		 * @param lineNumber the number of the line that is about to be visited.
+		 */
 		public default void visitLineNumber(int lineNumber) {};
 		
+		/**
+		 * Visits a simple constant definition (start token {@code constant}).<br>
+		 * {@code value} and {@code descriptor} will either both have a value or both be null.
+		 * @param group the id of the constant's constant group.
+		 * @param owner the internal name of the constant's owner class.
+		 * @param name the constant's Java identifier.
+		 * @param value the constant's value as a {@code String}, or null if it is not specified (will be resolved at runtime).
+		 * @param descriptor the constant's descriptor, or null if it is not specified (will be resolved at runtime).
+		 */
 		public default void visitSimpleConstantDefinition(String group, String owner, String name, String value, String descriptor) {}
 
+		/**
+		 * Visits a flag constant definition (start token {@code flag}).<br>
+		 * {@code value} and {@code descriptor} will either both have a value or both be null.
+		 * @param group the id of the constant's constant group.
+		 * @param owner the internal name of the constant's owner class.
+		 * @param name the constant's Java identifier.
+		 * @param value the constant's value as a {@code String}, or null if it is not specified (will be resolved at runtime).
+		 * @param descriptor the constant's descriptor, or null if it is not specified (will be resolved at runtime).
+		 */
 		public default void visitFlagConstantDefinition(String group, String owner, String name, String value, String descriptor) {}
 		
+		/**
+		 * Visits a target method definition (start token {@code target_method}).
+		 * @param owner the internal name of the method's owner class.
+		 * @param name the method's Java identifier.
+		 * @param descriptor the method's descriptor.
+		 * @return an instance of {@code TargetMethodDefinitionVisitor} that should visit the parameter and return groups of the 
+		 * target method definition, or null if they should not be visited.
+		 */
 		public default TargetMethodDefinitionVisitor visitTargetMethodDefinition(String owner, String name, String descriptor) 
 		{
 			return DEFAULT;
 		}
 		
+		/**Visits the end of the file. This is the last method called.**/
 		public default void endVisit() {}
 	}
 	
 	public static interface TargetMethodDefinitionVisitor
 	{	
+		/**
+		 * Visits a parameter group definition (start token {@code param}).
+		 * @param parameterIndex the index of the parameter  
+		 * @param group the id of the constant group  
+		 */
 		public default void visitParameterGroupDefinition(int parameterIndex, String group) {}
 		
+		/**
+		 * Visits a return group definition (start token {@code return}).  
+		 * @param group the id of the constant group  
+		 */
 		public default void visitReturnGroupDefinition(String group) {}
 		
+		/**Visits the end of the method definition. This is the last method called.**/
 		public default void endVisit() {}
 	}
 }

@@ -1,8 +1,13 @@
 package daomephsta.unpick.constantmappers.datadriven.parser.v2;
 
-import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Definitions.TargetMethodDefinitionVisitor;
-import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Definitions.Visitor;
+import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Reader.TargetMethodDefinitionVisitor;
+import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Reader.Visitor;
 
+/**
+ * A visitor that generates .unpick v2 format text. Useful for programmatically writing .unpick v2 format files;
+ * or remapping them, when used as the delegate for an instance of {@link UnpickV2Remapper}.
+ * @author Daomephsta
+ */
 public class UnpickV2Writer implements Visitor
 {
 	private final StringBuilder writeBuffer = new StringBuilder();

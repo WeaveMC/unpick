@@ -2,6 +2,11 @@ package daomephsta.unpick.constantmappers.datadriven.parser;
 
 import java.util.Objects;
 
+/**
+ * Immutable data object that encapsulates a method owner, name and descriptor
+ * so that they can be used as a map key.
+ * @author Daomephsta
+ */
 public class MethodKey
 {
 	private final String owner, name, descriptor;
