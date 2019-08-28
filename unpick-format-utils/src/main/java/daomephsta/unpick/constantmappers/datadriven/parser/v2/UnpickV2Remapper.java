@@ -6,17 +6,20 @@ import java.util.regex.Pattern;
 
 import daomephsta.unpick.constantmappers.datadriven.parser.MethodKey;
 import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Definitions.TargetMethodDefinitionVisitor;
+import daomephsta.unpick.constantmappers.datadriven.parser.v2.UnpickV2Definitions.Visitor;
 
-public class UnpickV2Remapper extends UnpickV2Writer
+public class UnpickV2Remapper implements Visitor
 {
 	private static final Pattern OBJECT_SIGNATURE_FINDER = Pattern.compile("L([a-zA-Z0-9$_\\/]+);");
 	private final Map<String, String> classMappings;
 	private final Map<MethodKey, String> methodMappings;
-	
-	public UnpickV2Remapper(Map<String, String> classMappings, Map<MethodKey, String> methodMappings)
+	private final Visitor delegate;
+
+	public UnpickV2Remapper(Map<String, String> classMappings, Map<MethodKey, String> methodMappings, Visitor delegate)
 	{
 		this.classMappings = classMappings;
 		this.methodMappings = methodMappings;
+		this.delegate = delegate;
 	}
 
 	public TargetMethodDefinitionVisitor visitTargetMethodDefinition(String owner, String name, String descriptor)
@@ -40,6 +43,31 @@ public class UnpickV2Remapper extends UnpickV2Writer
 			if (classMappings.containsKey(objectSignature))
 				remappedDescriptor = remappedDescriptor.replace(objectSignature, classMappings.get(objectSignature));
 		}
-		return super.visitTargetMethodDefinition(remappedOwner, remappedName, remappedDescriptor);
+		return delegate.visitTargetMethodDefinition(remappedOwner, remappedName, remappedDescriptor);
+	}
+
+	public void startVisit()
+	{
+		delegate.startVisit();
+	}
+
+	public void visitLineNumber(int lineNumber)
+	{
+		delegate.visitLineNumber(lineNumber);
+	}
+
+	public void visitSimpleConstantDefinition(String group, String owner, String name, String value, String descriptor)
+	{
+		delegate.visitSimpleConstantDefinition(group, owner, name, value, descriptor);
+	}
+
+	public void visitFlagConstantDefinition(String group, String owner, String name, String value, String descriptor)
+	{
+		delegate.visitFlagConstantDefinition(group, owner, name, value, descriptor);
+	}
+
+	public void endVisit()
+	{
+		delegate.endVisit();
 	}
 }
