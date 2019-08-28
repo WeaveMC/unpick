@@ -177,18 +177,26 @@ public class TargetMethods
 		}
 		
 		/**
-		 * @return true if a constant group mapping exists for the return
+		 * @return true if a constant group mapping exists for returns
 		 */ 
 		public boolean hasReturnConstantGroup()
 		{
 			return returnConstantGroup != null;
 		}
 		
+		/**
+		 * @return the constant group mapping exists for returns
+		 */ 
 		public String getReturnConstantGroup()
 		{
 			return returnConstantGroup;
 		}
 		
+		/**
+		 * @param classResolver a class resolver for resolving classes, if necessary
+		 * @param classInternalName the internal name of the potential implementor.
+		 * @return true if the type or a supertype implements this method.
+		 */
 		public boolean implementedBy(IClassResolver classResolver, String classInternalName)
 		{
 			if (declarator.equals(classInternalName) || implementors.contains(classInternalName))

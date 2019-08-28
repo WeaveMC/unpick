@@ -12,18 +12,13 @@ import daomephsta.unpick.impl.constantmappers.datadriven.parser.v2.V2Parser;
 import daomephsta.unpick.impl.representations.TargetMethods;
 
 /**
- * Maps inlined values to constants, using a mapping defined in a file
+ * Maps inlined values to constants using mappings defined in a file
  * @author Daomephsta
  */
 public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
 {	
 	private final TargetMethods targetMethods;
-	/**
-	 * Constructs a new data driven constant mapper, using the mappings in {@code mappingSource}
-	 * and resolving constants using {@code constantResolver}.
-	 * @param mappingSources InputStreams of text in .unpick format
-	 * @param classResolver a class resolver that can resolve the classes of the target methods
-	 */
+
 	public DataDrivenConstantMapper(IClassResolver classResolver, InputStream... mappingSources)
 	{
 		super(new HashMap<>());
@@ -32,6 +27,7 @@ public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
 		{
 			try
 			{
+				//Avoid buffering, so that only the version specifier bytes are consumed 
 				byte[] version = new byte [2];
 				mappingSource.read(version);
 				if (version[0] == 'v')
@@ -59,7 +55,6 @@ public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
 			}
 		}
 		this.targetMethods = targetMethodsBuilder.build();
-		System.out.println(targetMethods);
 	}
 
 	@Override

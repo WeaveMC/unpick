@@ -14,8 +14,7 @@ import daomephsta.unpick.impl.Utils;
 import daomephsta.unpick.impl.representations.ReplacementSet;
 import daomephsta.unpick.impl.representations.ReplacementInstructionGenerator.Context;
 /**
- * Uninlines inlined values, mapping them to constants using the specified
- * instance of {@link IConstantMapper} 
+ * Uninlines inlined values 
  * @author Daomephsta
  */
 public class ConstantUninliner
@@ -46,7 +45,7 @@ public class ConstantUninliner
 	 * @param mapper an instance of IConstantMapper.
 	 * @param constantResolver an instance of IConstantResolver for resolving constant types and 
 	 * values.
-	 * @param logFile YEET
+	 * @param logFile a file path to output debug logging to.
 	 */
 	public ConstantUninliner(IConstantMapper mapper, IConstantResolver constantResolver, String logFile)
 	{
@@ -85,8 +84,7 @@ public class ConstantUninliner
 
 	/**
 	 * Unlines all inlined values in the specified method.
-	 * @param methodOwner the internal name of the class that owns
-	 * the method represented by {@code method}.
+	 * @param methodOwner the internal name of the class that owns {@code method}.
 	 * @param method the class to transform, as a MethodNode.
 	 */
 	public void transformMethod(String methodOwner, MethodNode method)

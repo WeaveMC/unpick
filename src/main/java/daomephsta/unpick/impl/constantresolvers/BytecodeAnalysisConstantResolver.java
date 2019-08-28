@@ -12,6 +12,10 @@ import daomephsta.unpick.api.IClassResolver;
 import daomephsta.unpick.api.constantresolvers.IConstantResolver;
 import daomephsta.unpick.impl.LiteralType;
 
+/**
+ * Resolves constants by analysing the bytecode of their owners.
+ * @author Daomephsta
+ */
 public class BytecodeAnalysisConstantResolver implements IConstantResolver
 {
 	private static final Set<Type> VALID_CONSTANT_TYPES = Arrays.stream(LiteralType.values()).map(LiteralType::getType).collect(toSet());

@@ -5,11 +5,15 @@ import java.util.AbstractMap;
 import org.objectweb.asm.Type;
 
 /**
- * Defines a method of resolving constants from their owning class and name.
+ * Defines a method of resolving constants by their owning class and name.
  * @author Daomephsta
  */
 public interface IConstantResolver
 {
+	/**
+	 * Immutable data object that holds information about a resolved constant.
+	 * @author Daomephsta
+	 */
 	public static class ResolvedConstant extends AbstractMap.SimpleImmutableEntry<Type, Object>
 	{
 		public ResolvedConstant(Type type, Object value)
@@ -40,7 +44,7 @@ public interface IConstantResolver
 	 * from its owning class and name.
 	 * @param owner the internal name of the class that owns the constant.
 	 * @param name the name of the constant.
-	 * @return the type and value of the constant.
+	 * @return the type and value of the constant as an instance of {@link ResolvedConstant}.
 	 */
 	public ResolvedConstant resolveConstant(String owner, String name);
 }
