@@ -1,9 +1,0 @@
-v2
-
-constant int_test unpick/Constants INT_CONST_M1
-constant int_test unpick/Constants INT_CONST_0
-target_method daomephsta/unpick/tests/smoke/V2ParserSmokeTest$Test intFunction (I)I
-	param 0 int_test
-	return int_test
-constant int_test unpick/Constants INT_CONST_1
-constant int_test unpick/Constants INT_CONST_2
