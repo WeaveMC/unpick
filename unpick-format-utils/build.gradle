@@ -5,7 +5,11 @@ plugins {
 
 archivesBaseName = 'unpick-format-utils'
 group = 'io.github.weavemc'
-version = '2.0.0'
+version = '2.0.0+build.unknown'
+def ENV = System.getenv()
+if (ENV.BUILD_NUMBER) {
+	version = "2.0.0+build.${ENV.BUILD_NUMBER}"
+}
 
 repositories {
     jcenter()

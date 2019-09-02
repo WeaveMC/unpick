@@ -5,10 +5,10 @@ plugins {
 
 archivesBaseName='unpick'
 group = 'io.github.weavemc'
-version = 'unknown'
+version = '2.0.0+build.unknown'
 def ENV = System.getenv()
 if (ENV.BUILD_NUMBER) {
-	version = ENV.BUILD_NUMBER
+	version = "2.0.0+build.${ENV.BUILD_NUMBER}"
 }
 
 targetCompatibility = 1.8
