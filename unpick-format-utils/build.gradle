@@ -32,6 +32,17 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 publishing {
+	repositories {
+        if (rootProject.hasProperty('weavemc_pass')) {
+            maven {
+                url = 'http://deploy.modmuss50.me/'
+                credentials {
+                    username = 'weavemc'
+                    password = rootProject.getProperty('weavemc_pass')
+                }
+            }
+        }
+    }
     publications {
     	binary(MavenPublication) {
             from components.java
