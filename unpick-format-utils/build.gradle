@@ -34,6 +34,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 publishing {
 	repositories {
         if (rootProject.hasProperty('weavemc_pass')) {
+			println 'Password found. Remote maven available.'
             maven {
                 url = 'http://deploy.modmuss50.me/'
                 credentials {
