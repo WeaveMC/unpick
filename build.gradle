@@ -5,7 +5,10 @@ plugins {
 
 archivesBaseName='unpick'
 group = 'io.github.weavemc'
-version = '2.0.0'
+version = 'unknown'
+if (ENV.BUILD_NUMBER) {
+	version = ENV.BUILD_NUMBER
+}
 
 targetCompatibility = 1.8
 
@@ -38,6 +41,17 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 publishing {
+	repositories {
+        if (project.hasProperty('weavemc_pass')) {
+            maven {
+                url = 'http://deploy.modmuss50.me/'
+                credentials {
+                    username = 'weavemc'
+                    password = project.getProperty('weavemc_pass')
+                }
+            }
+        }
+    }
     publications {
     	binary(MavenPublication) {
             from components.java
