@@ -6,6 +6,7 @@ plugins {
 archivesBaseName='unpick'
 group = 'io.github.weavemc'
 version = 'unknown'
+def ENV = System.getenv()
 if (ENV.BUILD_NUMBER) {
 	version = ENV.BUILD_NUMBER
 }
