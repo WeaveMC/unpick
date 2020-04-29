@@ -6,7 +6,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 
-import daomephsta.unpick.api.constantresolvers.IConstantResolver;
 import daomephsta.unpick.impl.*;
 import daomephsta.unpick.impl.FlagStatement.BitOp;
 
@@ -15,9 +14,8 @@ import daomephsta.unpick.impl.FlagStatement.BitOp;
  * @author Daomephsta
  */
 public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
-{	
+{
 	private final Collection<FlagDefinition> resolvedConstantDefinitions = new ArrayList<>();
-	private final Collection<FlagDefinition> unresolvedConstantDefinitions = new ArrayList<>();
 	
 	/**
 	 * Adds a flag to this group.
@@ -115,16 +113,10 @@ public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
 		return Optional.of(replacementInstructions);
 	}
 	
-	private void resolveAllConstants(IConstantResolver constantResolver)
+	@Override
+	protected void acceptResolved(FlagDefinition definition)
 	{
-		if (!unresolvedConstantDefinitions.isEmpty())
-		{
-			for (FlagDefinition definition : unresolvedConstantDefinitions)
-			{
-				resolvedConstantDefinitions.add(definition.resolve(constantResolver));
-			}
-			unresolvedConstantDefinitions.clear();
-		}
+		resolvedConstantDefinitions.add(definition);
 	}
 
 	@Override

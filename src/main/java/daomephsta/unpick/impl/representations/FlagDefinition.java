@@ -1,10 +1,7 @@
 package daomephsta.unpick.impl.representations;
 
-import java.util.Map.Entry;
-
 import org.objectweb.asm.Type;
 
-import daomephsta.unpick.api.constantresolvers.IConstantResolver;
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
 
 /**
@@ -13,7 +10,7 @@ import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException
  * @author Daomephsta
  */
 public class FlagDefinition extends AbstractConstantDefinition<FlagDefinition>
-{	
+{
 	/**
 	 * Constructs an instance of FlagDefinition that will
 	 * have its value and descriptor lazily resolved.
@@ -58,16 +55,12 @@ public class FlagDefinition extends AbstractConstantDefinition<FlagDefinition>
 	}
 	
 	@Override
-	FlagDefinition resolve(IConstantResolver constantResolver)
+	protected void setValue(Object value) throws ResolutionException
 	{
-		Entry<Type, Object> resolvedData = constantResolver.resolveConstant(owner, name);
-		this.descriptor = resolvedData.getKey();
-		Object value = resolvedData.getValue();
 		if (value instanceof Long || value instanceof Integer)
 			this.value = value;
 		else 
-			throw new UnpickSyntaxException(owner + '.' + name + " is not of a valid flag type. Flags must be ints or longs.");
-		return this;
+			throw new ResolutionException(this + " is not of a valid flag type. Flags must be ints or longs.");
 	}
 	
 	@Override
@@ -79,7 +72,12 @@ public class FlagDefinition extends AbstractConstantDefinition<FlagDefinition>
 	@Override
 	public String toString()
 	{
-		return String.format("FlagDefinition {Qualified Name: %s.%s, Descriptor: %s, Bits: %s}", 
-			owner, name, descriptor, Long.toBinaryString(getValue().longValue()));
+		if (isResolved())
+		{
+			return String.format("FlagDefinition {Qualified Name: %s.%s, Descriptor: %s, Bits: %s}", 
+					owner, name, descriptor, Long.toBinaryString(getValue().longValue()));
+		}
+		else
+			return String.format("FlagDefinition {Qualified Name: %s.%s}", owner, name);
 	}
 }

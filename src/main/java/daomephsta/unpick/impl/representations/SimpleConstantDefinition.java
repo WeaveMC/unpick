@@ -1,10 +1,6 @@
 package daomephsta.unpick.impl.representations;
 
-import java.util.Map.Entry;
-
 import org.objectweb.asm.Type;
-
-import daomephsta.unpick.api.constantresolvers.IConstantResolver;
 
 /**
  * Represents a constant field. The value and descriptor may be
@@ -40,18 +36,14 @@ public class SimpleConstantDefinition extends AbstractConstantDefinition<SimpleC
 	}
 	
 	@Override
-	SimpleConstantDefinition resolve(IConstantResolver constantResolver)
-	{
-		Entry<Type, Object> resolvedData = constantResolver.resolveConstant(owner, name);
-		this.descriptor = resolvedData.getKey();
-		this.value = resolvedData.getValue();
-		return this;
-	}
-	
-	@Override
 	public String toString()
 	{
-		return String.format("SimpleConstantDefinition {Qualified Name: %s.%s, Descriptor: %s, Value: %s}", 
-			owner, name, descriptor, value);
+		if (isResolved())
+		{
+			return String.format("SimpleConstantDefinition {Qualified Name: %s.%s, Descriptor: %s, Value: %s}", 
+					owner, name, descriptor, value);
+		}
+		else
+			return String.format("SimpleConstantDefinition {Qualified Name: %s.%s}", owner, name);
 	}
 }

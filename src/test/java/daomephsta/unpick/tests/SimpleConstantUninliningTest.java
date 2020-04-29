@@ -5,6 +5,7 @@ import static org.objectweb.asm.Opcodes.RETURN;
 
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 import org.objectweb.asm.ClassReader;
@@ -255,6 +256,28 @@ public class SimpleConstantUninliningTest
 	public void testUnknownStringConstantsReturn(String constant)
 	{
 		testUnknownConstantReturn(constant);
+	}
+	
+	@Test
+	public void missingField()
+	{
+		String constantConsumerName = "foo";
+		String constantConsumerDescriptor = "(I)V";
+		Class<?> fieldClass = Constants.class;
+		String fieldName = "DOES_NOT_EXIST";
+		IConstantMapper mapper = MockConstantMapper.builder(ClassReader::new)
+				.simpleConstantGroup("test")
+					.define(fieldClass, fieldName)
+				.add()
+				.targetMethod(Methods.class, constantConsumerName, constantConsumerDescriptor)
+					.remapParameter(0, "test")
+				.add()
+				.build();
+
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver(), "missingField.log");
+		MethodNode mockInvocation = TestUtils.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 1)
+				.getMockMethod();
+		uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);
 	}
 
 	private void testKnownConstantParameter(Object constant, String expectedConstant, String constantConsumerName, String constantConsumerDescriptor)

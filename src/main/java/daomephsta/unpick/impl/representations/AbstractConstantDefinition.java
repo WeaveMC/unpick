@@ -1,5 +1,7 @@
 package daomephsta.unpick.impl.representations;
 
+import java.util.Map.Entry;
+
 import org.objectweb.asm.Type;
 
 import daomephsta.unpick.api.constantresolvers.IConstantResolver;
@@ -66,7 +68,23 @@ public abstract class AbstractConstantDefinition<C extends AbstractConstantDefin
 		return value != null;
 	}
 	
-	abstract C resolve(IConstantResolver constantResolver);
+	public final C resolve(IConstantResolver constantResolver) throws ResolutionException
+	{
+		Entry<Type, Object> resolvedData = constantResolver.resolveConstant(owner, name);
+		if (resolvedData == null)
+			throw new ResolutionException("Could not resolve " + this);
+		this.descriptor = resolvedData.getKey();
+		setValue(resolvedData.getValue());
+		@SuppressWarnings("unchecked")
+		C self = (C) this;
+		return self;
+	}
+	
+	//Subclasses can override this to validate the value
+	protected void setValue(Object value) throws ResolutionException
+	{
+		this.value = value;
+	}
 	
 	/**@return the internal name of the class that owns the represented constant*/
 	public String getOwner()
@@ -96,5 +114,15 @@ public abstract class AbstractConstantDefinition<C extends AbstractConstantDefin
 	public Object getValue()
 	{
 		return value;
+	}
+	
+	public static class ResolutionException extends Exception
+	{
+		private static final long serialVersionUID = -7161839164703778814L;
+
+		public ResolutionException(String message)
+		{
+			super(message);
+		}
 	}
 }

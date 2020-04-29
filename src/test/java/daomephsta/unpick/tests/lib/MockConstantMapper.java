@@ -125,7 +125,12 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 
 		public ConstantGroupBuilder<T> define(Class<?> owner, String name)
 		{
-			constantDefinitions.add(definitionFactory.apply(owner.getName().replace('.', '/'), name));
+			return define(owner.getName(), name);
+		}
+		
+		public ConstantGroupBuilder<T> define(String owner, String name)
+		{
+			constantDefinitions.add(definitionFactory.apply(owner.replace('.', '/'), name));
 			return this;
 		}
 		

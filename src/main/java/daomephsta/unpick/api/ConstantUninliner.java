@@ -110,7 +110,7 @@ public class ConstantUninliner
 		}
 		catch (AnalyzerException e)
 		{
-			throw new RuntimeException("Could not analyse " + methodOwner + '.' + method.name + method.desc, e);
+			logger.log(Level.WARNING, String.format("Processing %s.%s%s failed", methodOwner, method.name, method.desc), e);
 		}
 	}
 
@@ -119,7 +119,7 @@ public class ConstantUninliner
 	{
 		if (!mapper.targets(methodInvocation.owner, methodInvocation.name, methodInvocation.desc))
 			return;
-		logger.log(Level.INFO, String.format("Target: %s.%s", methodInvocation.owner, methodInvocation.name));
+		logger.log(Level.INFO, String.format("Considering target: %s.%s", methodInvocation.owner, methodInvocation.name));
 		Frame<SourceValue> frame = frames[instructionIndex];
 		Type[] parameterTypes = Type.getArgumentTypes(methodInvocation.desc);
 		for (int parameterIndex = 0; parameterIndex < parameterTypes.length; parameterIndex++)
@@ -129,8 +129,8 @@ public class ConstantUninliner
 			for (AbstractInsnNode sourceInsn : frame.getStack(frame.getStackSize() - parameterTypes.length + parameterIndex).insns)
 			{
 				Context context = new Context(constantResolver, replacementSet, sourceInsn, enclosingMethod.instructions, frames, logger);
-				logger.log(Level.INFO, String.format("Target: %s.%s#param-%d Arg Seed: %s", 
-						methodInvocation.owner, methodInvocation.name, parameterIndex, Utils.visitableToString(sourceInsn::accept)).trim());
+				logger.log(Level.INFO, String.format("Considering target: %s.%s#param-%d Arg Seed: %s", 
+						methodInvocation.owner, methodInvocation.name, parameterIndex, Utils.visitableToString(sourceInsn::accept).trim()));
 				mapper.mapParameter(methodInvocation.owner, methodInvocation.name, methodInvocation.desc, parameterIndex, context);
 			}
 		}
@@ -145,6 +145,8 @@ public class ConstantUninliner
 			Frame<SourceValue> frame = frames[instructionIndex];
 			for (AbstractInsnNode sourceInsn : frame.getStack(0).insns) //Only one value on the stack before a return
 			{
+				logger.log(Level.INFO, String.format("Considering target: %s.%s#return Arg Seed: %s", 
+						methodOwner, method.name, Utils.visitableToString(sourceInsn::accept).trim()));
 				Context context = new Context(constantResolver, replacementSet, sourceInsn, method.instructions, frames, logger);
 				mapper.mapReturn(methodOwner, method.name, method.desc, context );
 			}

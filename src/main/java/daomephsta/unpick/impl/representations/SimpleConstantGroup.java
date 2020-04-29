@@ -1,11 +1,11 @@
 package daomephsta.unpick.impl.representations;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldInsnNode;
 
-import daomephsta.unpick.api.constantresolvers.IConstantResolver;
 import daomephsta.unpick.impl.AbstractInsnNodes;
 
 /**
@@ -15,7 +15,6 @@ import daomephsta.unpick.impl.AbstractInsnNodes;
 public class SimpleConstantGroup extends AbstractConstantGroup<SimpleConstantDefinition>
 {
 	private final Map<Object, SimpleConstantDefinition> resolvedConstantDefinitions = new HashMap<>();
-	private final Collection<SimpleConstantDefinition> unresolvedConstantDefinitions = new ArrayList<>();
 	
 	/**
 	 * Adds a constant definition to this group.
@@ -25,7 +24,7 @@ public class SimpleConstantGroup extends AbstractConstantGroup<SimpleConstantDef
 	public void add(SimpleConstantDefinition constantDefinition)
 	{
 		if (constantDefinition.isResolved())
-			resolvedConstantDefinitions.put(constantDefinition.getValue(), constantDefinition);
+			acceptResolved(constantDefinition);
 		else 
 			unresolvedConstantDefinitions.add(constantDefinition);
 	}
@@ -50,16 +49,10 @@ public class SimpleConstantGroup extends AbstractConstantGroup<SimpleConstantDef
 						constantDefinition.getName(), constantDefinition.getDescriptorString()));
 	}
 	
-	private void resolveAllConstants(IConstantResolver constantResolver)
+	@Override
+	protected void acceptResolved(SimpleConstantDefinition definition)
 	{
-		if (!unresolvedConstantDefinitions.isEmpty())
-		{
-			for (SimpleConstantDefinition definition : unresolvedConstantDefinitions)
-			{
-				resolvedConstantDefinitions.put(definition.resolve(constantResolver).getValue(), definition);
-			}
-			unresolvedConstantDefinitions.clear();
-		}
+		resolvedConstantDefinitions.put(definition.getValue(), definition);
 	}
 
 	@Override
