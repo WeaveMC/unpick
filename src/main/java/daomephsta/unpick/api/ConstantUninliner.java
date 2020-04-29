@@ -1,7 +1,7 @@
 package daomephsta.unpick.api;
 
-import java.io.IOException;
-import java.util.logging.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -11,8 +11,8 @@ import org.objectweb.asm.tree.analysis.*;
 import daomephsta.unpick.api.constantmappers.IConstantMapper;
 import daomephsta.unpick.api.constantresolvers.IConstantResolver;
 import daomephsta.unpick.impl.Utils;
-import daomephsta.unpick.impl.representations.ReplacementSet;
 import daomephsta.unpick.impl.representations.ReplacementInstructionGenerator.Context;
+import daomephsta.unpick.impl.representations.ReplacementSet;
 /**
  * Uninlines inlined values 
  * @author Daomephsta
@@ -33,10 +33,7 @@ public class ConstantUninliner
 	 */
 	public ConstantUninliner(IConstantMapper mapper, IConstantResolver constantResolver)
 	{
-		this.mapper = mapper;
-		this.constantResolver = constantResolver;
-		this.logger = Logger.getLogger("unpick");
-		logger.setUseParentHandlers(false);
+		this(mapper, constantResolver, Logger.getLogger("unpick"));
 	}
 	
 	/**
@@ -45,29 +42,13 @@ public class ConstantUninliner
 	 * @param mapper an instance of IConstantMapper.
 	 * @param constantResolver an instance of IConstantResolver for resolving constant types and 
 	 * values.
-	 * @param logFile a file path to output debug logging to.
+	 * @param logger a logger for debug logging.
 	 */
-	public ConstantUninliner(IConstantMapper mapper, IConstantResolver constantResolver, String logFile)
+	public ConstantUninliner(IConstantMapper mapper, IConstantResolver constantResolver, Logger logger)
 	{
-		this(mapper, constantResolver);
-		try
-		{
-			FileHandler fileHandler = new FileHandler(logFile);
-			Formatter formatter = new Formatter()
-			{
-				@Override
-				public String format(LogRecord record)
-				{
-					return record.getLevel() + ": " + String.format(record.getMessage(), record.getParameters()) + System.lineSeparator();
-				}
-			};
-			fileHandler.setFormatter(formatter);
-			logger.addHandler(fileHandler);
-		} 
-		catch (SecurityException | IOException e)
-		{
-			e.printStackTrace();
-		}
+		this.mapper = mapper;
+		this.constantResolver = constantResolver;
+		this.logger = logger;
 	}
 
 	/**

@@ -274,7 +274,7 @@ public class SimpleConstantUninliningTest
 				.add()
 				.build();
 
-		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver(), "missingField.log");
+		ConstantUninliner uninliner = new ConstantUninliner(mapper, new ClasspathConstantResolver());
 		MethodNode mockInvocation = TestUtils.mockInvokeStatic(Methods.class, constantConsumerName, constantConsumerDescriptor, 1)
 				.getMockMethod();
 		uninliner.transformMethod(MethodMocker.CLASS_NAME, mockInvocation);

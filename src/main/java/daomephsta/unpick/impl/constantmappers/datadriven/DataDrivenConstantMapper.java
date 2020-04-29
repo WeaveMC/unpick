@@ -3,6 +3,7 @@ package daomephsta.unpick.impl.constantmappers.datadriven;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 import daomephsta.unpick.api.IClassResolver;
 import daomephsta.unpick.constantmappers.datadriven.parser.UnpickSyntaxException;
@@ -17,6 +18,7 @@ import daomephsta.unpick.impl.representations.TargetMethods;
  */
 public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
 {	
+	private static final Logger LOGGER = Logger.getLogger("unpick");
 	private final TargetMethods targetMethods;
 
 	public DataDrivenConstantMapper(IClassResolver classResolver, InputStream... mappingSources)
@@ -55,6 +57,7 @@ public class DataDrivenConstantMapper extends SimpleAbstractConstantMapper
 			}
 		}
 		this.targetMethods = targetMethodsBuilder.build();
+		LOGGER.info("Loaded " + targetMethods);
 	}
 
 	@Override
