@@ -149,6 +149,8 @@ public class UnpickV2Reader implements Closeable
 	{ 
 		if (tokens.length != 4)
 			throw new UnpickSyntaxException(lineNumber, "Unexpected token count. Expected 4. Found " + tokens.length);
+		if (lastTargetMethodVisitor != null)
+			lastTargetMethodVisitor.endVisit();
 		lastTargetMethodVisitor = visitor.visitTargetMethodDefinition(tokens[1], tokens[2], tokens[3]);
 	}
 
