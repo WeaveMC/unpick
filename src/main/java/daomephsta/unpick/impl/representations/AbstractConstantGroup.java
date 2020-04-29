@@ -11,7 +11,13 @@ public abstract class AbstractConstantGroup<T extends AbstractConstantDefinition
 {
 	private static final Logger LOGGER = Logger.getLogger("unpick");
 	protected final Collection<T> unresolvedConstantDefinitions = new ArrayList<>();
+	private final String id;
 	
+	public AbstractConstantGroup(String id)
+	{
+		this.id = id;
+	}
+
 	/**
 	 * Adds a constant definition to this group.
 	 * @param constantDefinition a constant definition.
@@ -24,7 +30,6 @@ public abstract class AbstractConstantGroup<T extends AbstractConstantDefinition
 		{
 			for (T definition : unresolvedConstantDefinitions)
 			{
-				LOGGER.info("Resolving " + definition);
 				try
 				{
 					acceptResolved(definition.resolve(constantResolver));
@@ -39,4 +44,9 @@ public abstract class AbstractConstantGroup<T extends AbstractConstantDefinition
 	}
 	
 	protected abstract void acceptResolved(T definition);
+	
+	public String getId()
+	{
+		return id;
+	}
 }

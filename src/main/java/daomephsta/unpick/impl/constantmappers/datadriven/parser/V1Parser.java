@@ -42,7 +42,7 @@ public enum V1Parser
 					ReplacementInstructionGenerator constantGroup = constantGroups.get(group);
 					if (constantGroup == null)
 					{
-						constantGroups.put(group, (constantGroup = new SimpleConstantGroup()));
+						constantGroups.put(group, (constantGroup = new SimpleConstantGroup(group)));
 					}
 					if (constantGroup instanceof SimpleConstantGroup)
 						((SimpleConstantGroup) constantGroup).add(parsedConstant);
@@ -61,7 +61,7 @@ public enum V1Parser
 					ReplacementInstructionGenerator constantGroup = constantGroups.get(group);
 					if (constantGroup == null)
 					{
-						constantGroups.put(group, (constantGroup = new FlagConstantGroup()));
+						constantGroups.put(group, (constantGroup = new FlagConstantGroup(group)));
 					}
 					if (constantGroup instanceof FlagConstantGroup)
 						((FlagConstantGroup) constantGroup).add(parsedFlag);

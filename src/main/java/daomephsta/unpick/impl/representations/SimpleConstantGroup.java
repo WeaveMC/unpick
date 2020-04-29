@@ -2,6 +2,7 @@ package daomephsta.unpick.impl.representations;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -14,7 +15,13 @@ import daomephsta.unpick.impl.AbstractInsnNodes;
  */
 public class SimpleConstantGroup extends AbstractConstantGroup<SimpleConstantDefinition>
 {
+	private static final Logger LOGGER = Logger.getLogger("unpick");
 	private final Map<Object, SimpleConstantDefinition> resolvedConstantDefinitions = new HashMap<>();
+	
+	public SimpleConstantGroup(String id)
+	{
+		super(id);
+	}
 	
 	/**
 	 * Adds a constant definition to this group.
@@ -23,6 +30,7 @@ public class SimpleConstantGroup extends AbstractConstantGroup<SimpleConstantDef
 	@Override
 	public void add(SimpleConstantDefinition constantDefinition)
 	{
+		LOGGER.info("Loaded " + constantDefinition + " into '" + getId() + "'");
 		if (constantDefinition.isResolved())
 			acceptResolved(constantDefinition);
 		else 

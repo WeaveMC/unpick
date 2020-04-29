@@ -1,6 +1,7 @@
 package daomephsta.unpick.impl.representations;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -15,7 +16,13 @@ import daomephsta.unpick.impl.FlagStatement.BitOp;
  */
 public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
 {
+	private static final Logger LOGGER = Logger.getLogger("unpick");
 	private final Collection<FlagDefinition> resolvedConstantDefinitions = new ArrayList<>();
+	
+	public FlagConstantGroup(String id)
+	{
+		super(id);
+	}
 	
 	/**
 	 * Adds a flag to this group.
@@ -24,6 +31,7 @@ public class FlagConstantGroup extends AbstractConstantGroup<FlagDefinition>
 	@Override
 	public void add(FlagDefinition flagDefinition)
 	{
+		LOGGER.info("Loaded " + flagDefinition + " into '" + getId() + "'");
 		if (flagDefinition.isResolved())
 			resolvedConstantDefinitions.add(flagDefinition);
 		else 

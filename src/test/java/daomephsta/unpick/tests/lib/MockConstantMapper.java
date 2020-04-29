@@ -1,8 +1,7 @@
 package daomephsta.unpick.tests.lib;
 
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 import org.objectweb.asm.Type;
 
@@ -111,11 +110,11 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 		private final String name;
 		private final Collection<T> constantDefinitions = new ArrayList<>();
 		private final BiFunction<String, String, T> definitionFactory;
-		private final Supplier<AbstractConstantGroup<T>> groupFactory;
+		private final Function<String, AbstractConstantGroup<T>> groupFactory;
 		
 		ConstantGroupBuilder(Builder parent, String name,
 				BiFunction<String, String, T> definitionFactory,
-				Supplier<AbstractConstantGroup<T>> groupFactory)
+				Function<String, AbstractConstantGroup<T>> groupFactory)
 		{
 			super(parent);
 			this.name = name;
@@ -145,7 +144,7 @@ public class MockConstantMapper extends SimpleAbstractConstantMapper
 		
 		public Builder add()
 		{
-			AbstractConstantGroup<T> group = groupFactory.get();
+			AbstractConstantGroup<T> group = groupFactory.apply(name);
 			for (T constant : constantDefinitions)
 			{
 				group.add(constant);

@@ -44,7 +44,7 @@ public class V2Parser implements Visitor
 	@Override
 	public void visitSimpleConstantDefinition(String groupId, String owner, String name, String value, String descriptor)
 	{
-		ReplacementInstructionGenerator group = constantGroups.computeIfAbsent(groupId, k -> new SimpleConstantGroup());
+		ReplacementInstructionGenerator group = constantGroups.computeIfAbsent(groupId, k -> new SimpleConstantGroup(k));
 		SimpleConstantDefinition constant = createSimpleConstantDefinition(owner, name, value, descriptor);
 		if (group instanceof SimpleConstantGroup)
 			((SimpleConstantGroup) group).add(constant);
@@ -71,7 +71,7 @@ public class V2Parser implements Visitor
 	@Override
 	public void visitFlagConstantDefinition(String groupId, String owner, String name, String value, String descriptor)
 	{
-		ReplacementInstructionGenerator group = constantGroups.computeIfAbsent(groupId, k -> new FlagConstantGroup());
+		ReplacementInstructionGenerator group = constantGroups.computeIfAbsent(groupId, k -> new FlagConstantGroup(k));
 		FlagDefinition constant = createFlagDefinition(owner, name, value, descriptor);
 		if (group instanceof FlagConstantGroup)
 			((FlagConstantGroup) group).add(constant);
