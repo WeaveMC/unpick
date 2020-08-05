@@ -152,6 +152,8 @@ public class UnpickV2Reader implements Closeable
 		if (lastTargetMethodVisitor != null)
 			lastTargetMethodVisitor.endVisit();
 		lastTargetMethodVisitor = visitor.visitTargetMethodDefinition(tokens[1], tokens[2], tokens[3]);
+		if (lastTargetMethodVisitor == null) //Handle nulls as specified in the JavaDoc
+			lastTargetMethodVisitor = DEFAULT;
 	}
 
 	private String stripComment(String in)
