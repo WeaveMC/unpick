@@ -2,7 +2,6 @@ package daomephsta.unpick.impl.constantresolvers;
 
 import static java.util.stream.Collectors.toSet;
 
-import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -36,19 +35,10 @@ public class BytecodeAnalysisConstantResolver implements IConstantResolver
 	
 	private ResolvedConstants extractConstants(String owner)
 	{
-		try
-		{
-			ClassReader cr = classResolver.resolveClass(owner);
-			if (cr == null)
-				throw new NullPointerException("ClassReader cannot be null");
-			ResolvedConstants resolvedConstants = new ResolvedConstants(Opcodes.ASM7);
-			cr.accept(resolvedConstants, 0);
-			return resolvedConstants;
-		} 
-		catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}
+		ClassReader cr = classResolver.resolveClass(owner);
+		ResolvedConstants resolvedConstants = new ResolvedConstants(Opcodes.ASM7);
+		cr.accept(resolvedConstants, 0);
+		return resolvedConstants;
 	}
 	
 	private static class ResolvedConstants extends ClassVisitor

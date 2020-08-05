@@ -1,11 +1,11 @@
 package daomephsta.unpick.impl.representations;
 
-import java.io.IOException;
 import java.util.*;
 
 import org.objectweb.asm.*;
 
 import daomephsta.unpick.api.IClassResolver;
+import daomephsta.unpick.api.IClassResolver.ClassResolutionException;
 
 public class TargetImplementations
 {
@@ -150,11 +150,11 @@ public class TargetImplementations
 				classReader.accept(inheritanceChecker, 0); 
 				return inheritanceChecker.result;
 			}
-			catch (IOException e)
+			catch (ClassResolutionException e)
 			{
 				e.printStackTrace();
+				return false;
 			}
-			return false;
 		}
 
 		public InheritanceChecker(int api, IClassResolver classResolver, String targetOwner)
@@ -189,8 +189,8 @@ public class TargetImplementations
 						if (result) return;
 					}
 				}
-			} 
-			catch (IOException e)
+			}
+			catch (ClassResolutionException e)
 			{
 				e.printStackTrace();
 			}

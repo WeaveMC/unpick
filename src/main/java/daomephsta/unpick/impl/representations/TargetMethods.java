@@ -1,13 +1,14 @@
 package daomephsta.unpick.impl.representations;
 
-import java.io.IOException;
 import java.util.*;
 
 import org.objectweb.asm.*;
 
 import daomephsta.unpick.api.IClassResolver;
+import daomephsta.unpick.api.IClassResolver.ClassResolutionException;
+import daomephsta.unpick.impl.representations.TargetMethods.TargetMethod;
 
-public class TargetMethods
+public class TargetMethods implements Iterable<TargetMethod>
 {
 	private final Map<String, TargetMethod> methods;
 	private final IClassResolver classResolver;
@@ -53,6 +54,12 @@ public class TargetMethods
 	{
 		TargetMethod targetMethod = methods.get(methodName + methodDescriptor);
 		return targetMethod.getReturnConstantGroup();
+	}
+	
+	@Override
+	public Iterator<TargetMethod> iterator()
+	{
+		return methods.values().iterator();
 	}
 	
 	@Override
@@ -127,7 +134,7 @@ public class TargetMethods
 	 * Represents a method with parameters that may be inlined constants
 	 * @author Daomephsta
 	 */
-	private static class TargetMethod
+	public static class TargetMethod
 	{
 		private final String declarator,
 							 name;
@@ -234,16 +241,15 @@ public class TargetMethods
 			try
 			{
 				ClassReader classReader = classResolver.resolveClass(clazz);
-				InheritanceChecker inheritanceChecker 
-					= new InheritanceChecker(api, classResolver, targetOwner);
+				InheritanceChecker inheritanceChecker = new InheritanceChecker(api, classResolver, targetOwner);
 				classReader.accept(inheritanceChecker, 0); 
 				return inheritanceChecker.result;
 			}
-			catch (IOException e)
+			catch (ClassResolutionException e)
 			{
 				e.printStackTrace();
+				return false;
 			}
-			return false;
 		}
 
 		public InheritanceChecker(int api, IClassResolver classResolver, String targetOwner)
@@ -278,8 +284,8 @@ public class TargetMethods
 						if (result) return;
 					}
 				}
-			} 
-			catch (IOException e)
+			}
+			catch (ClassResolutionException e)
 			{
 				e.printStackTrace();
 			}
