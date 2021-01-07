@@ -15,6 +15,11 @@ public class UnpickV2Writer implements Visitor
 	@Override
 	public void startVisit()
 	{
+		if (writeBuffer.length() != 0)
+		{
+			return;
+		}
+
 		writeBuffer.append("v2\n");
 	}
 	
